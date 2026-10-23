@@ -100,7 +100,25 @@ Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador cap
 - **Reporte diario ampliado:** separa registros con marcas de tiempo reales (en orden cronológico de creación) de los registros históricos sin marca de tiempo.
 - **Persistencia:** los campos nuevos se conservan en SQLite local, en su copia JSON y en las exportaciones posteriores. La precisión depende del reloj del dispositivo, por lo que conviene mantenerlo correctamente configurado.
 
-**Importante:** la hora de creación **no indica** cuándo empezaste, terminaste o completaste una actividad; para registrar horas reales de ejecución se requeriría una función de inicio/finalización diferente.
+**Importante:** la hora de creación **no indica** cuándo empezaste, terminaste o completaste una actividad. Utiliza el control de inicio y finalización descrito a continuación para registrar esas horas por separado.
+
+## Control deslizante de inicio y finalización de actividades
+
+Cada actividad programada en un día de estudio, evaluación o proyecto tiene un apartado desplegable **«⏱ Registro de tiempo»**. Es independiente de la hora de creación de la tarea y de sus minutos estimados.
+
+1. **Deslizar inicio:** abre el apartado y mueve **«Desliza la hora de inicio»**. Mientras arrastras verás la hora de 00:00 a 23:59; **al soltar** el control se guarda como **ajuste manual** para esa fecha.
+2. **Deslizar finalización:** mueve **«Desliza la hora de finalización»**. Al soltar se guarda la hora elegida como ajuste manual y la actividad se marca como completada.
+3. **«▶ Iniciar ahora» / «✓ Finalizar ahora»:** cuando la fecha seleccionada es **hoy**, estos botones capturan la hora real del dispositivo. **«Finalizar ahora»** también marca la tarea como completada. En fechas pasadas o futuras, los botones «Ahora» están deshabilitados; se pueden usar los deslizadores manuales.
+4. **«Limpiar horas»** borra únicamente las horas de inicio y finalización de esa fecha, sin borrar la actividad ni su marca de completado.
+5. **Casilla de completado:** al marcarla **hoy**, si todavía no existe una hora de finalización, se registra la hora actual. Desmarcarla quita la hora de finalización, pero conserva la de inicio. Marcarla para una fecha anterior no inventa una hora histórica.
+
+**Validación:** no se acepta que la hora de finalización sea anterior a la de inicio. Si se ajustan ambas, el calendario muestra el intervalo transcurrido entre ellas; cuando hay una hora manual, el resultado se identifica como **«Intervalo con ajustes manuales»** y no como tiempo real verificado.
+
+En el reporte ampliado se muestran por separado **hora de creación**, **hora de inicio**, **hora de finalización**, sus fuentes (reloj real o ajuste manual) y el intervalo registrado cuando ambas horas están disponibles. Para una actividad antigua sin registros se muestra **«No registrada»**. Las actividades recurrentes mantienen marcas de inicio y finalización **independientes para cada fecha**, aunque compartan una única hora de creación en el catálogo.
+
+Los datos se almacenan como `activityTimes` dentro del registro de la fecha en `calendar_days`, con campos `startedAt`, `finishedAt`, `startSource` y `finishSource`. Se conservan en SQLite, JSON y las exportaciones posteriores.
+
+**Nota:** las marcas del reloj dependen de la fecha, hora y zona horaria configuradas en tu dispositivo. Los deslizadores admiten cualquier hora dentro del día seleccionado y son ajustes manuales, no una medición automática de trabajo efectivo. La carga diaria prevista continúa calculándose a partir de los minutos planificados y el estado completado.
 
 ## Formulario de descansos y comidas
 
@@ -155,7 +173,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 ## Otras funciones
 
 - Selección automática de la fecha actual al abrir el calendario.
-- Duraciones previstas editables; registro real de creación de actividades y pausas; capacidad estimada según la hora actual, la fecha seleccionada y los estados completados o pendientes.
+- Duraciones previstas editables; fechas de creación e inicio/finalización registradas por separado, con deslizadores y botones de hora actual; capacidad estimada según la fecha seleccionada.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
