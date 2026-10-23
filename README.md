@@ -60,17 +60,18 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 1. En **«Descansar después de»**, elige una actividad programada para ese día.
 2. Escribe un **nombre**, por ejemplo «Desayuno», «Comida», «Caminar» o «Descanso».
 3. Indica una **duración en minutos** (de 5 a 960, en múltiplos de 5) y pulsa **«Agregar descanso»**. Se puede repetir para programar varias pausas, incluso después de la misma actividad.
-4. En la lista de descansos puedes editar el **nombre**, la **actividad después de la que ocurre** y la **duración**, o pulsar **«Eliminar pausa»**.
-5. Al hacer cambios, las pausas aparecen en el horario con horas de inicio y fin. Se recalculan el total de descansos y el tiempo libre. Si las actividades y pausas superan las 16 horas disponibles, aparece una advertencia.
+4. Cada descanso dispone ahora de una casilla **«Completado»**, tanto en la lista de descansos personalizados como junto a su horario. Marca o desmarca una pausa sin modificar los minutos programados; las dos vistas se mantienen sincronizadas.
+5. En la lista de descansos puedes editar el **nombre**, la **actividad después de la que ocurre** y la **duración**, o pulsar **«Eliminar pausa»**.
+6. Los descansos aparecen en el horario con sus horas de inicio y fin. El resumen indica **«Descansos completados: X/Y»** por separado de las actividades completadas. Si las actividades y pausas superan las 16 horas disponibles, aparece una advertencia.
 
 ### Compatibilidad y recuperación de los descansos anteriores
 
-- Los días existentes mantienen sus **90 minutos de descanso automático**, repartidos entre actividades. El total automático se puede modificar desde el mismo panel.
+- Los días existentes mantienen sus **90 minutos de descanso automático**, repartidos entre actividades. El total automático se puede modificar desde el mismo panel. **Los descansos automáticos también pueden marcarse como completados directamente en el horario.**
 - **Al agregar el primer descanso personalizado**, ese día utiliza solamente los descansos que definas: ya no se suman automáticamente los 90 minutos anteriores.
 - **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
 - Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
 - En días **No definido**, **Viaje** o **No disponible** no se programan descansos.
-- Cada fecha guarda sus propios descansos en el registro `calendar_days` del SQLite local y en el respaldo JSON. Los horarios anteriores se migran sin necesidad de modificar sus datos originales.
+- Cada fecha guarda sus propios descansos y su estado de completado en el registro `calendar_days` del SQLite local y en el respaldo JSON. Los horarios anteriores se mantienen sin necesidad de modificar sus datos originales; las pausas anteriores comienzan sin marcar salvo que ya tengan una marca de completado guardada.
 
 ## Persistencia SQLite (local al navegador)
 
@@ -105,7 +106,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 ## Otras funciones
 
 - Selección automática de la fecha actual al abrir el calendario.
-- Duraciones editables; actividades completadas y pendientes, horarios, descansos configurables y tiempo disponible.
+- Duraciones editables; actividades completadas y pendientes, horarios, descansos configurables con casillas de completado y tiempo disponible.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
