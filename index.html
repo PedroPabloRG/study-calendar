@@ -57,7 +57,12 @@
 .pause input[type=checkbox]{accent-color:#53cba2;flex-shrink:0}
 .pause.break-done{border-color:#4bb486;background:#1f413e}
 .pause.break-done span{text-decoration:line-through;opacity:.85}
-@media(max-width:680px){.break-form,.break-edit{grid-template-columns:1fr 1fr}.break-form label:first-child,.break-edit label:first-child{grid-column:1/-1}.break-form button{grid-column:1/-1}.break-edit button{justify-self:end}}.notice{background:#4b3028;padding:11px;border-radius:9px;color:#ffcc9e}.summary{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}.summary span{background:#243550;padding:8px;border-radius:8px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.full{grid-column:1/-1}.stack{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.bar{display:flex;background:#24344d;height:12px;border-radius:8px;overflow:hidden;margin:15px 0}.bar .study{background:#718ef0}.bar .break{background:#e2b477}.bar .free{background:#4dbd9e}footer{padding:20px 0;color:#9fb1ca;font-size:12px}@media(max-width:980px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:530px){.wrap{padding:11px}.panel{padding:12px}.date{min-height:69px;padding:5px}.task{grid-template-columns:20px 78px minmax(80px,1fr) 73px;gap:4px;padding:6px}.task-actions{grid-column:2/-1;justify-self:stretch;justify-content:flex-end;gap:5px}.task-actions button{padding:6px 8px}.task input[type=number]{width:70px}.time{font-size:10px}}
+@media(max-width:680px){.break-form,.break-edit{grid-template-columns:1fr 1fr}.break-form label:first-child,.break-edit label:first-child{grid-column:1/-1}.break-form button{grid-column:1/-1}.break-edit button{justify-self:end}}.notice{background:#4b3028;padding:11px;border-radius:9px;color:#ffcc9e}.summary{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}.summary span{background:#243550;padding:8px;border-radius:8px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.full{grid-column:1/-1}.stack{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.bar{display:flex;background:#24344d;height:15px;border-radius:8px;overflow:hidden;margin:15px 0}.bar .study{background:#718ef0}.bar .break{background:#e2b477}.bar .free{background:#4dbd9e}.bar .historical-pending{background:#66748c}
+.capacity-context{border-left:3px solid #72a8e9;background:#1c304d;border-radius:7px;padding:10px 12px;margin:10px 0 4px;color:#e3f1ff;font-size:14px}
+.capacity-legend{display:flex;flex-wrap:wrap;gap:8px 15px;font-size:12px;color:#c1cee5}
+.capacity-legend .legend-entry{display:inline-flex;align-items:center;gap:7px}
+.capacity-legend i{display:inline-block;width:10px;height:10px;border-radius:3px}
+.capacity-legend .study{background:#718ef0}.capacity-legend .break{background:#e2b477}.capacity-legend .free{background:#4dbd9e}.capacity-legend .historical-pending{background:#66748c}footer{padding:20px 0;color:#9fb1ca;font-size:12px}@media(max-width:980px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:530px){.wrap{padding:11px}.panel{padding:12px}.date{min-height:69px;padding:5px}.task{grid-template-columns:20px 78px minmax(80px,1fr) 73px;gap:4px;padding:6px}.task-actions{grid-column:2/-1;justify-self:stretch;justify-content:flex-end;gap:5px}.task-actions button{padding:6px 8px}.task input[type=number]{width:70px}.time{font-size:10px}}
 .day-report{box-sizing:border-box;position:fixed;margin:auto;border:1px solid #4d6b8c;border-radius:20px;background:#111d32;color:#eef4ff;width:min(920px,calc(100vw - 26px));max-width:920px;max-height:calc(100vh - 34px);padding:0;overflow:auto;box-shadow:0 28px 90px #030916e8}
 .day-report::backdrop{background:#050b19d9;backdrop-filter:blur(5px)}
 .day-report-shell{padding:clamp(15px,3vw,31px)}
@@ -85,7 +90,7 @@
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
 <header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Hora real de creación · Actividades y descansos · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
-<section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Tiempo completado</small><b id="complete"></b></div><div class="metric"><small>Tiempo pendiente</small><b id="pending"></b></div><div class="metric"><small>Tiempo libre restante</small><b id="remaining"></b></div></section>
+<section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Duración marcada como completada</small><b id="complete"></b></div><div class="metric"><small>Duración pendiente</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
 <label for="selectionMode">Seleccionar <select id="selectionMode"><option value="single">Un día (consultar y asignar)</option><option value="multi">Varios días</option><option value="range">Intervalo (dos clics)</option></select></label>
@@ -97,7 +102,12 @@
 </section>
 <div class="calendar" id="calendar"></div>
 <p><small><strong>Reporte ampliado:</strong> haz tres clics seguidos sobre una fecha para verla en grande, con sus actividades, descansos y progreso.</small></p>
-<h2>Carga diaria estimada</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>Las 16 horas sirven solo como referencia de capacidad planificada. El calendario mostrará la hora real de registro de cada actividad o descanso nuevo, sin inventar horas de inicio y fin.</small></p></section>
+<h2>Carga diaria estimada</h2>
+<p id="capacityContext" class="capacity-context" aria-live="polite">Calculando capacidad diaria…</p>
+<div id="bar" class="bar" role="img" aria-label="Carga diaria"></div>
+<div id="capacityLegend" class="capacity-legend"></div>
+<div id="warning"></div>
+<p><small id="capacityHelp">La carga se calculará según la fecha seleccionada.</small></p></section>
 <section class="panel"><div class="row"><div><h2 id="selectedTitle"></h2><small id="selectedDate"></small></div><div class="toolbar"><button type="button" id="openDayReport">Ver reporte del día</button><button id="reset">Restablecer día</button></div></div><div class="controls"><span id="dayStatus" class="day-status" aria-live="polite">Estado: No definido</span><button id="resetOrder" title="Dejar el orden original sin borrar actividades ni progreso">Restablecer orden</button></div><div class="summary" id="summary"></div><form id="addTaskForm" class="add-task">
 <label>Nombre de la nueva actividad<input id="newTaskName" type="text" maxlength="80" placeholder="Ej. Lectura de un libro" required></label>
 <label>Duración (minutos)<input id="newTaskMinutes" type="number" min="5" max="960" step="5" value="30" required></label>
@@ -210,6 +220,102 @@ function moveActivity(i,direction){const visible=visibleTasks(selected).map(o=>o
 function resetOrder(){get(selected).order=NAMES.map((_,i)=>i).filter(i=>!globallyDeleted(i));save();render()}
 function minutes(s){return active(s)?visibleTasks(s).reduce((a,o)=>a+o.v,0):0}
 
+// Reference window 05:00–21:00. Completion is user-reported, not elapsed time.
+const DAY_START_MINUTES=5*60,DAY_END_MINUTES=21*60,REFERENCE_MINUTES=DAY_END_MINUTES-DAY_START_MINUTES;
+function capacitySnapshot(s,now=new Date()){
+  const today=iso(now),kind=s<today?'past':s===today?'today':'future';
+  const tasks=active(s)?visibleTasks(s):[],d=get(s),pauses=breakPlanFor(s,tasks);
+  const completed=new Set(Array.isArray(d.done)?d.done:[]);
+  const taskPlanned=tasks.reduce((n,t)=>n+t.v,0);
+  const taskCompleted=tasks.reduce((n,t)=>n+(completed.has(t.i)?t.v:0),0);
+  const breakPlanned=pauses.reduce((n,p)=>n+p.minutes,0);
+  const breakCompleted=pauses.reduce((n,p)=>n+(p.done?p.minutes:0),0);
+  const taskPending=Math.max(0,taskPlanned-taskCompleted);
+  const breakPending=Math.max(0,breakPlanned-breakCompleted);
+  const clockMinutes=now.getHours()*60+now.getMinutes();
+  const clockText=pad(now.getHours())+':'+pad(now.getMinutes());
+  const capacity=kind==='today'
+    ?Math.max(0,Math.min(REFERENCE_MINUTES,DAY_END_MINUTES-Math.max(DAY_START_MINUTES,clockMinutes)))
+    :kind==='future'?REFERENCE_MINUTES:null;
+  const demand=kind==='today'?taskPending+breakPending:taskPlanned+breakPlanned;
+  const spare=capacity===null?null:Math.max(0,capacity-demand);
+  const overflow=capacity===null?0:Math.max(0,demand-capacity);
+  const completionDenominator=taskPlanned+breakPlanned;
+  const completionNumerator=taskCompleted+breakCompleted;
+  return {kind,clockText,capacity,demand,spare,overflow,
+    taskPlanned,taskCompleted,taskPending,breakPlanned,breakCompleted,breakPending,
+    taskCount:tasks.length,doneTaskCount:tasks.filter(t=>completed.has(t.i)).length,
+    breakCount:pauses.length,doneBreakCount:pauses.filter(p=>p.done).length,
+    progress:completionDenominator?Math.round(completionNumerator*100/completionDenominator):0
+  };
+}
+function drawCapacity(s,now=new Date()){
+  const c=capacitySnapshot(s,now),past=c.kind==='past',today=c.kind==='today';
+  el('planned').textContent=fmt(c.taskPlanned);
+  el('complete').textContent=fmt(c.taskCompleted);
+  el('pending').textContent=fmt(c.taskPending);
+  el('remainingLabel').textContent=past?'Progreso histórico':today?'Margen libre hasta las 21:00':'Capacidad sin asignar';
+  el('remaining').textContent=past?c.progress+'%':fmt(c.spare);
+  const statusSummary='<span>Actividades completadas: '+c.doneTaskCount+'/'+c.taskCount+'</span>'+
+    '<span>Descansos completados: '+c.doneBreakCount+'/'+c.breakCount+'</span>';
+  const describe=(color,label,minutes)=>'<span class="legend-entry"><i class="'+color+'"></i>'+label+': '+fmt(minutes)+'</span>';
+  let segments=[],denominator=0,legend='',description='',help='',warning='';
+  if(past){
+    const planned=c.taskPlanned+c.breakPlanned;
+    denominator=planned;
+    segments=[['study',c.taskCompleted],['break',c.breakCompleted],['historical-pending',c.taskPending+c.breakPending]];
+    description='Fecha pasada · Resumen histórico de lo marcado como completado.';
+    legend=describe('study','Actividades marcadas completadas',c.taskCompleted)+
+      describe('break','Descansos marcados completados',c.breakCompleted)+
+      describe('historical-pending','Duración sin completar',c.taskPending+c.breakPending);
+    help='El progreso histórico representa duraciones previstas marcadas como completadas; no mide horas realmente trabajadas ni supone tiempo libre del pasado.';
+    el('summary').innerHTML='<span>Histórico</span><span>Actividades previstas: '+fmt(c.taskPlanned)+'</span>'+
+      '<span>Descansos previstos: '+fmt(c.breakPlanned)+'</span>'+
+      '<span>Progreso registrado: '+c.progress+'%</span>'+statusSummary;
+    if(!planned)warning='<div class="capacity-note">No hay actividades ni descansos previstos que evaluar en esta fecha.</div>';
+  }else{
+    denominator=c.capacity;
+    const activityDemand=today?c.taskPending:c.taskPlanned;
+    const breakDemand=today?c.breakPending:c.breakPlanned;
+    segments=[['study',activityDemand],['break',breakDemand],['free',c.spare]];
+    if(today){
+      const beforeStart=now.getHours()*60+now.getMinutes()<DAY_START_MINUTES;
+      const afterEnd=now.getHours()*60+now.getMinutes()>=DAY_END_MINUTES;
+      description='Hoy · Hora local del dispositivo: '+c.clockText+' · '+(beforeStart?'La jornada empieza a las 05:00.':afterEnd?'La franja de planificación terminó a las 21:00.':'Quedan '+fmt(c.capacity)+' hasta las 21:00.');
+      help='Se comparan solamente actividades y descansos pendientes con el tiempo real restante hasta las 21:00. Las duraciones son estimadas y las casillas de completado no acreditan tiempo efectivo trabajado.';
+      el('summary').innerHTML='<span>Hora actual: '+c.clockText+'</span>'+
+        '<span>Tiempo disponible hasta las 21:00: '+fmt(c.capacity)+'</span>'+
+        '<span>Actividades pendientes: '+fmt(c.taskPending)+'</span>'+
+        '<span>Descansos pendientes: '+fmt(c.breakPending)+'</span>'+
+        '<span>Margen libre: '+fmt(c.spare)+'</span>'+statusSummary;
+    }else{
+      description='Fecha futura · Capacidad planificada: 05:00–21:00 (16 horas).';
+      help='El plan futuro usa una referencia fija de 16 horas. No se atribuyen horas reales de inicio o fin; la fecha y hora de creación de cada actividad se registran por separado.';
+      el('summary').innerHTML='<span>Plan futuro: 16h</span>'+
+        '<span>Actividades previstas: '+fmt(c.taskPlanned)+'</span>'+
+        '<span>Descansos previstos: '+fmt(c.breakPlanned)+'</span>'+
+        '<span>Capacidad sin asignar: '+fmt(c.spare)+'</span>'+statusSummary;
+    }
+    legend=describe('study',today?'Actividades pendientes':'Actividades previstas',activityDemand)+
+      describe('break',today?'Descansos pendientes':'Descansos previstos',breakDemand)+
+      describe('free',today?'Margen disponible':'Sin asignar',c.spare);
+    if(c.overflow)warning='<div class="notice">La carga '+(today?'pendiente':'planificada')+' supera el tiempo disponible por '+fmt(c.overflow)+'. Ajusta las actividades o los descansos.</div>';
+    else if(today&&c.capacity===0)warning='<div class="capacity-note">La franja de hoy terminó. Las tareas pendientes siguen registradas para que puedas revisarlas.</div>';
+  }
+  let used=0;
+  const bar=segments.map(([key,amount])=>{
+    const span=denominator>0?Math.min(Math.max(0,denominator-used),amount):0;
+    used+=span;
+    return '<div class="'+key+'" style="width:'+(denominator?span/denominator*100:0)+'%"></div>';
+  }).join('');
+  el('capacityContext').textContent=description;
+  el('bar').innerHTML=bar;
+  el('bar').setAttribute('aria-label',description+' '+(past?'Progreso: '+c.progress+'%.':('Demanda: '+fmt(c.demand)+', capacidad: '+fmt(c.capacity)+'.')));
+  el('capacityLegend').innerHTML=legend;
+  el('capacityHelp').textContent=help;
+  el('warning').innerHTML=warning;
+  return c;
+}
 function breakPlanFor(s,valid=visibleTasks(s)){
   if(!active(s)||!valid.length)return [];
   const d=get(s),available=new Set(valid.map(x=>x.i));
@@ -617,7 +723,7 @@ function drawCalendar(){
   el('calendar').querySelectorAll('[data-day]').forEach(b=>b.onclick=event=>calendarDateClicked(event,b.dataset.day));
   selectionStatus();
 }
-function drawDay(){const d=get(selected),m=state(selected),dur=durations(selected),total=minutes(selected),completed=done(selected),br=totalBreakMinutes(selected),remain=960-total-br;
+function drawDay(){const d=get(selected),m=state(selected),dur=durations(selected),capacity=drawCapacity(selected);
 el('selectedTitle').textContent=date(selected).toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});el('selectedDate').textContent=selected;
 const statusText={undefined:'No definido',free:'Libre / estudio',evaluation:'Evaluación',travel:'Viaje',off:'No disponible',project:'Día de proyecto'};
 el('dayStatus').textContent='Estado: '+(statusText[m]||'No definido');
@@ -627,10 +733,7 @@ const desiredScope=isProject
  ?'<option value="day">Solo este día</option><option value="project">Todos los días de proyecto</option>'
  :'<option value="day">Solo este día</option><option value="repeat">Todos los días de estudio</option><option value="evaluation">Todos los días de evaluación</option>';
 if(scopeSelect.innerHTML!==desiredScope)scopeSelect.innerHTML=desiredScope;
-drawBreakPlanner(selected);el('resetOrder').disabled=!active(selected);el('addTaskButton').disabled=!active(selected);el('planned').textContent=fmt(total);el('complete').textContent=fmt(completed);el('pending').textContent=fmt(total-completed);el('remaining').textContent=(remain<0?'−':'')+fmt(remain);
-const restProgress=breakProgress(selected);
-el('summary').innerHTML='<span>Disponible: 16h</span><span>Actividades: '+fmt(total)+'</span><span>Pausas: '+fmt(br)+'</span><span>Capacidad estimada: '+(remain<0?'−':'')+fmt(remain)+'</span><span>Actividades completadas: '+(d.done||[]).filter(i=>active(selected)&&eligible(selected,i)&&!removed(selected,i)).length+'/'+(active(selected)?visibleTasks(selected).length:0)+'</span><span>Descansos completados: '+restProgress.completed+'/'+restProgress.total+'</span>';
-const a=Math.min(960,total),b=Math.min(Math.max(0,960-a),br);el('bar').innerHTML='<div class="study" style="width:'+a/960*100+'%"></div><div class="break" style="width:'+b/960*100+'%"></div><div class="free" style="width:'+Math.max(0,960-a-b)/960*100+'%"></div>';el('warning').innerHTML=remain<0?'<div class="notice">Los minutos previstos exceden la referencia de 16 horas por '+fmt(-remain)+'. Reduce tareas o descansos.</div>':'';
+drawBreakPlanner(selected);el('resetOrder').disabled=!active(selected);el('addTaskButton').disabled=!active(selected);
 if(!active(selected)){el('tasks').innerHTML='<div class="notice">'+(m==='undefined'?'Día no definido. Utiliza la selección múltiple del calendario para asignarle un estado.':'Día de '+(m==='travel'?'viaje':'descanso o indisponibilidad')+'. Utiliza la selección múltiple del calendario para cambiar su estado.')+'</div>';el('removedTasks').innerHTML='';return}
 let rows='<div class="recorded-note">El horario real no se deduce de las duraciones. Se indica la fecha y hora en que se creó cada actividad o descanso. Los minutos son previstos.</div>';
 const valid=visibleTasks(selected),scheduledBreaks=breakPlanFor(selected,valid);
@@ -661,7 +764,7 @@ valid.forEach(({v,i},index)=>{
 if(!valid.length){
   rows='<p>'+(m==='project'?'Todavía no tienes actividades de proyecto. Agrégalas arriba; puedes repetirlas en todos tus días de proyecto.':'No hay actividades programadas. Puedes restaurarlas debajo o restablecer el día.')+'</p>';
 }
-if(valid.length)rows+='<p><small>Capacidad restante estimada según duraciones planificadas: '+(remain<0?'exceso de ':'')+fmt(remain)+'. Esto no equivale a tiempo efectivamente trabajado.</small></p>';
+if(valid.length)rows+='<p><small>Duraciones previstas; la capacidad y el tiempo pendiente se calculan arriba según la fecha seleccionada. No equivalen a horas realmente trabajadas.</small></p>';
 el('tasks').innerHTML=rows;
 const hidden=dur.map((v,i)=>i).filter(i=>eligible(selected,i)&&removed(selected,i));el('removedTasks').innerHTML=hidden.length?'<h2>Actividades quitadas de este día</h2>'+hidden.map(i=>'<div class="removed-item"><span class="muted">'+esc(NAMES[i])+'</span><div class="task-actions"><button data-restore="'+i+'" aria-label="Restaurar '+esc(NAMES[i])+'">Restaurar</button><button class="rename-task" data-rename="'+i+'" aria-label="Renombrar '+esc(NAMES[i])+'">✎ Renombrar</button><button class="delete-task" data-delete-global="'+i+'" aria-label="Eliminar permanentemente '+esc(NAMES[i])+'">🗑 Eliminar</button></div></div>').join(''):'<p><small>Para quitar una actividad, pulsa «Quitar» junto a su nombre. Podrás restaurarla aquí.</small></p>';
 el('removedTasks').querySelectorAll('[data-restore]').forEach(x=>x.onclick=()=>restoreActivity(Number(x.dataset.restore)));
