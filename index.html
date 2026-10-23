@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mi calendario de estudios</title>
 <style>
-:root{color-scheme:dark;font:15px system-ui,Segoe UI,sans-serif;background:#0b1120;color:#eef3ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1420px;margin:auto;padding:24px}h1{margin:0 0 8px;font-size:30px}h2{margin:0 0 15px;font-size:19px}p,small{color:#b3c3dc}header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}.panel,.metric{background:#151f35;border:1px solid #31405c;border-radius:16px;padding:19px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric b{font-size:24px;display:block;margin-top:6px}.toolbar,.controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button,input,select{font:inherit;color:#ecf2ff;background:#1e304d;border:1px solid #465b7a;border-radius:9px;padding:8px 11px}button{cursor:pointer}button:hover{border-color:#8eabff}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #91aeff}input[type=number]{width:88px}input[type=date]{max-width:160px}input[type=checkbox]{accent-color:#51c9a3;width:18px;height:18px}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:#acc0db;padding:8px 0}.date{position:relative;min-height:79px;width:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;padding:8px;background:#20304a}.date.selected{outline:2px solid #93acff;background:#344b78}.date.today{box-shadow:inset 0 0 0 2px #53d6a2}.date.today b::after{content:' · hoy';font-size:10px;font-weight:600;color:#68dfb5}.date.undefined{background:#1a283d}.date.travel{background:#392b45}.date.evaluation{background:#4a392a}.date.project{background:#183e49}.date.project small{color:#b2f5e2}.date.off{background:#30363b}.date.out{opacity:.45}
+:root{color-scheme:dark;font:15px system-ui,Segoe UI,sans-serif;background:#0b1120;color:#eef3ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1420px;margin:auto;padding:24px}h1{margin:0 0 8px;font-size:30px}h2{margin:0 0 15px;font-size:19px}p,small{color:#b3c3dc}header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}.panel,.metric{background:#151f35;border:1px solid #31405c;border-radius:16px;padding:19px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric b{font-size:24px;display:block;margin-top:6px}.toolbar,.controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button,input,select{font:inherit;color:#ecf2ff;background:#1e304d;border:1px solid #465b7a;border-radius:9px;padding:8px 11px}button{cursor:pointer}button:hover{border-color:#8eabff}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #91aeff}input[type=number]{width:88px}input[type=date]{max-width:160px}input[type=checkbox]{accent-color:#51c9a3;width:18px;height:18px}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:#acc0db;padding:8px 0}.date{user-select:none;touch-action:manipulation;position:relative;min-height:79px;width:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;padding:8px;background:#20304a}.date.selected{outline:2px solid #93acff;background:#344b78}.date.today{box-shadow:inset 0 0 0 2px #53d6a2}.date.today b::after{content:' · hoy';font-size:10px;font-weight:600;color:#68dfb5}.date.undefined{background:#1a283d}.date.travel{background:#392b45}.date.evaluation{background:#4a392a}.date.project{background:#183e49}.date.project small{color:#b2f5e2}.date.off{background:#30363b}.date.out{opacity:.45}
 .date.multi-picked{outline:3px solid #ffc66e;outline-offset:-3px;background:#36516a;opacity:1}
 .date.multi-picked::after{content:"✓";position:absolute;top:4px;right:5px;color:#0b192a;background:#ffcd72;border-radius:99px;width:20px;height:20px;font-size:13px;line-height:20px;text-align:center;font-weight:800}
 .multi-select-tools{background:#1c2d46;border:1px solid #3d5979;border-radius:12px;padding:12px;margin-bottom:14px}
@@ -52,8 +52,33 @@
 .pause.break-done{border-color:#4bb486;background:#1f413e}
 .pause.break-done span{text-decoration:line-through;opacity:.85}
 @media(max-width:680px){.break-form,.break-edit{grid-template-columns:1fr 1fr}.break-form label:first-child,.break-edit label:first-child{grid-column:1/-1}.break-form button{grid-column:1/-1}.break-edit button{justify-self:end}}.notice{background:#4b3028;padding:11px;border-radius:9px;color:#ffcc9e}.summary{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}.summary span{background:#243550;padding:8px;border-radius:8px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.full{grid-column:1/-1}.stack{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.bar{display:flex;background:#24344d;height:12px;border-radius:8px;overflow:hidden;margin:15px 0}.bar .study{background:#718ef0}.bar .break{background:#e2b477}.bar .free{background:#4dbd9e}footer{padding:20px 0;color:#9fb1ca;font-size:12px}@media(max-width:980px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:530px){.wrap{padding:11px}.panel{padding:12px}.date{min-height:69px;padding:5px}.task{grid-template-columns:20px 78px minmax(80px,1fr) 73px;gap:4px;padding:6px}.task-actions{grid-column:2/-1;justify-self:stretch;justify-content:flex-end;gap:5px}.task-actions button{padding:6px 8px}.task input[type=number]{width:70px}.time{font-size:10px}}
+.day-report{box-sizing:border-box;position:fixed;margin:auto;border:1px solid #4d6b8c;border-radius:20px;background:#111d32;color:#eef4ff;width:min(920px,calc(100vw - 26px));max-width:920px;max-height:calc(100vh - 34px);padding:0;overflow:auto;box-shadow:0 28px 90px #030916e8}
+.day-report::backdrop{background:#050b19d9;backdrop-filter:blur(5px)}
+.day-report-shell{padding:clamp(15px,3vw,31px)}
+.day-report-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;color:#aaccf3;font-weight:650}
+.day-report-close{background:#273b57;border-color:#6682aa}
+.day-report-date{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.day-report-number{font-size:clamp(70px,13vw,112px);line-height:1;font-weight:800;letter-spacing:-6px;color:#92d6fb}
+.day-report-date h2{font-size:clamp(26px,5vw,38px);margin:0 0 8px;line-height:1.2}
+.day-report-date p{margin:0}
+.day-report-badge{display:inline-block;background:#254b61;border:1px solid #559ab6;border-radius:99px;padding:6px 12px;margin-top:10px;color:#d2f4ff;font-size:13px}
+.day-report-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:16px 0 22px}
+.day-report-metric{background:#1e3049;border:1px solid #385574;border-radius:11px;padding:12px}
+.day-report-metric small{display:block;font-size:12px}
+.day-report-metric strong{display:block;font-size:21px;margin-top:4px;font-variant-numeric:tabular-nums}
+.day-report-section-title{margin:20px 0 11px;font-size:18px}
+.day-report-line{display:grid;grid-template-columns:110px minmax(0,1fr) auto;align-items:center;gap:13px;padding:12px;margin:8px 0;background:#1c2c44;border:1px solid #304663;border-radius:11px}
+.day-report-line.done{border-color:#347b66;background:#1c3a36}
+.day-report-line.pause-line{background:#332f3d;border-color:#6f604e}
+.day-report-line.pause-line.done{background:#234136;border-color:#3e9c76}
+.day-report-line .report-clock{font-size:13px;font-variant-numeric:tabular-nums;color:#c5d9f6}
+.day-report-line .report-label{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.day-report-line .report-label small{font-size:12px}
+.day-report-state{color:#c4d5f1;font-size:12px;font-weight:600;text-align:right}
+.day-report-warning{padding:12px;border-radius:9px;border:1px solid #b4824b;background:#413021;color:#ffe2b5}
+@media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Descansos con casilla de completado · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Reporte diario ampliado con triple clic · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Tiempo completado</small><b id="complete"></b></div><div class="metric"><small>Tiempo pendiente</small><b id="pending"></b></div><div class="metric"><small>Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
@@ -64,8 +89,10 @@
 </div>
 <p id="selectionStatus" class="selection-status" role="status" aria-live="polite">Haz clic en una fecha para seleccionarla, incluso cuando solo quieras modificar un día.</p>
 </section>
-<div class="calendar" id="calendar"></div><h2>Distribución diaria</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>16 horas disponibles entre las 05:00 y las 21:00. El tiempo libre no se agenda automáticamente.</small></p></section>
-<section class="panel"><div class="row"><div><h2 id="selectedTitle"></h2><small id="selectedDate"></small></div><button id="reset">Restablecer día</button></div><div class="controls"><span id="dayStatus" class="day-status" aria-live="polite">Estado: No definido</span><button id="resetOrder" title="Dejar el orden original sin borrar actividades ni progreso">Restablecer orden</button></div><div class="summary" id="summary"></div><form id="addTaskForm" class="add-task">
+<div class="calendar" id="calendar"></div>
+<p><small><strong>Reporte ampliado:</strong> haz tres clics seguidos sobre una fecha para verla en grande, con sus actividades, descansos y progreso.</small></p>
+<h2>Distribución diaria</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>16 horas disponibles entre las 05:00 y las 21:00. El tiempo libre no se agenda automáticamente.</small></p></section>
+<section class="panel"><div class="row"><div><h2 id="selectedTitle"></h2><small id="selectedDate"></small></div><div class="toolbar"><button type="button" id="openDayReport">Ver reporte del día</button><button id="reset">Restablecer día</button></div></div><div class="controls"><span id="dayStatus" class="day-status" aria-live="polite">Estado: No definido</span><button id="resetOrder" title="Dejar el orden original sin borrar actividades ni progreso">Restablecer orden</button></div><div class="summary" id="summary"></div><form id="addTaskForm" class="add-task">
 <label>Nombre de la nueva actividad<input id="newTaskName" type="text" maxlength="80" placeholder="Ej. Lectura de un libro" required></label>
 <label>Duración (minutos)<input id="newTaskMinutes" type="number" min="5" max="960" step="5" value="30" required></label>
 <label>Repetición<select id="newTaskScope"><option value="day">Solo este día</option><option value="repeat">Todos los días de estudio</option><option value="evaluation">Todos los días de evaluación</option></select></label>
@@ -90,6 +117,12 @@
 <div class="row history-heading"><div><h2>Historial de selecciones aplicadas</h2><p><small>Fecha de aplicación, días incluidos y cambios de estado. El historial nuevo comienza con las próximas selecciones guardadas.</small></p></div><button type="button" id="showMoreHistory" hidden>Mostrar más cambios</button></div>
 <div id="selectionHistory" class="selection-history"></div>
 </section></div><footer>Versión con eliminación permanente visible · SQLite en IndexedDB del navegador, sin sincronización entre dispositivos. Exporta copias SQLite o JSON periódicamente para conservar tus datos.</footer></main>
+<dialog id="dayReportDialog" class="day-report" aria-labelledby="dayReportHeading">
+<div class="day-report-shell">
+  <div class="day-report-toolbar"><span>📋 Reporte diario</span><button type="button" class="day-report-close" id="closeDayReport">✕ Cerrar reporte</button></div>
+  <div id="dayReportContent"></div>
+</div>
+</dialog>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.min.js"></script><script src="./sqlite-storage.js"></script>
 <script>
 (()=>{'use strict';
@@ -460,6 +493,87 @@ function applyCalendarSelection(){
   if(!currentMonthDates.length){year=date(selected).getFullYear();month=date(selected).getMonth()}
   render();
 }
+
+let rapidClickDate='',rapidClickTime=0,rapidClickCount=0;
+function calendarDateClicked(event,s){
+  const now=Date.now();
+  if(rapidClickDate===s&&now-rapidClickTime<=1100)rapidClickCount++;
+  else rapidClickCount=1;
+  rapidClickDate=s;rapidClickTime=now;
+  if(rapidClickCount>=3){
+    rapidClickCount=0;
+    openDayReport(s);
+    return;
+  }
+  calendarDayClicked(event,s);
+}
+function openDayReport(s){
+  if(!dateValid(s))return;
+  const type=state(s),status=DAY_TYPES[type]||'No definido',activeDay=active(s);
+  const d=get(s),tasks=activeDay?visibleTasks(s):[],pauses=breakPlanFor(s,tasks);
+  const planned=minutes(s),completed=done(s),restMinutes=pauses.reduce((v,x)=>v+x.minutes,0);
+  const remaining=960-planned-restMinutes;
+  const finishedTasks=tasks.filter(x=>(d.done||[]).includes(x.i)).length;
+  const finishedPauses=pauses.filter(x=>x.done).length;
+  const progress=planned?Math.round(100*completed/planned):0;
+  const calendarDate=date(s);
+  const weekday=calendarDate.toLocaleDateString('es-MX',{weekday:'long'});
+  const monthYear=calendarDate.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+  const number=calendarDate.getDate();
+  const metric=(label,value)=>'<div class="day-report-metric"><small>'+label+'</small><strong>'+value+'</strong></div>';
+  let timeline='',time=300;
+  const grouped=new Map();
+  for(const pause of pauses){
+    if(!grouped.has(pause.after))grouped.set(pause.after,[]);
+    grouped.get(pause.after).push(pause);
+  }
+  for(const task of tasks){
+    const start=time;time+=task.v;
+    const finished=(d.done||[]).includes(task.i);
+    timeline+='<div class="day-report-line '+(finished?'done':'')+'"><span class="report-clock">'+clock(start)+'–'+clock(time)+'</span>'+
+      '<span class="report-label"><strong>'+esc(NAMES[task.i])+'</strong><small>'+fmt(task.v)+' de actividad</small></span>'+
+      '<span class="day-report-state">'+(finished?'✓ Completada':'Pendiente')+'</span></div>';
+    for(const pause of grouped.get(task.i)||[]){
+      const from=time;time+=pause.minutes;
+      timeline+='<div class="day-report-line pause-line '+(pause.done?'done':'')+'"><span class="report-clock">'+clock(from)+'–'+clock(time)+'</span>'+
+        '<span class="report-label"><strong>☕ '+esc(pause.label)+'</strong><small>'+fmt(pause.minutes)+' de descanso</small></span>'+
+        '<span class="day-report-state">'+(pause.done?'✓ Completado':'Pendiente')+'</span></div>';
+    }
+  }
+  if(!tasks.length){
+    timeline='<p><small>Este día no tiene actividades programadas con su estado actual.</small></p>';
+  }
+  if(time<1260){
+    timeline+='<div class="day-report-line"><span class="report-clock">'+clock(time)+'–21:00</span>'+
+      '<span class="report-label"><strong>Tiempo sin asignar</strong><small>'+fmt(1260-time)+' disponible</small></span>'+
+      '<span class="day-report-state">Libre</span></div>';
+  }
+  const metrics=
+    metric('Actividades',finishedTasks+' / '+tasks.length)+
+    metric('Progreso académico',progress+'%')+
+    metric('Tiempo de actividades',fmt(planned))+
+    metric('Descansos completados',finishedPauses+' / '+pauses.length)+
+    metric('Tiempo en descansos',fmt(restMinutes))+
+    metric('Tiempo libre restante',(remaining<0?'−':'')+fmt(remaining));
+  el('dayReportContent').innerHTML=
+    '<div class="day-report-date"><div class="day-report-number">'+number+'</div><div>'+
+    '<h2 id="dayReportHeading">'+weekday.charAt(0).toUpperCase()+weekday.slice(1)+'<span style="display:block">'+monthYear+'</span></h2>'+
+    '<p>'+s+' · Horario de 05:00 a 21:00</p><span class="day-report-badge">'+status+'</span></div></div>'+
+    '<div class="day-report-metrics">'+metrics+'</div>'+
+    (remaining<0?'<p class="day-report-warning">El horario supera las 16 horas disponibles por '+fmt(-remaining)+'.</p>':'')+
+    '<h3 class="day-report-section-title">Actividades y descansos del día</h3>'+timeline+
+    (!activeDay?'<p><small>Los registros de actividades anteriores se conservan, pero no se muestran mientras el día tenga este estado.</small></p>':'');
+  const dialog=el('dayReportDialog');
+  if(!dialog.open){
+    if(typeof dialog.showModal==='function')dialog.showModal();
+    else dialog.setAttribute('open','');
+  }
+}
+function closeDayReport(){
+  const dialog=el('dayReportDialog');
+  if(typeof dialog.close==='function')dialog.close();
+  else dialog.removeAttribute('open');
+}
 function drawCalendar(){
   el('monthtitle').textContent=new Date(year,month,1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});
   let out=['L','M','M','J','V','S','D'].map(x=>'<div class="weekday">'+x+'</div>').join('');
@@ -472,7 +586,7 @@ function drawCalendar(){
     out+='<button type="button" class="date '+m+(s===selected?' selected':'')+(s===today?' today':'')+(picked?' multi-picked':'')+'" data-day="'+s+'" '+(s===today?'aria-current="date" ':'')+'aria-pressed="'+picked+'" '+'aria-label="'+s+' '+label+(picked?', seleccionado':'')+'"><b>'+d.getDate()+'</b><small>'+label+'</small><div class="progress"><i style="width:'+p+'%"></i></div></button>';
   }
   el('calendar').innerHTML=out;
-  el('calendar').querySelectorAll('[data-day]').forEach(b=>b.onclick=event=>calendarDayClicked(event,b.dataset.day));
+  el('calendar').querySelectorAll('[data-day]').forEach(b=>b.onclick=event=>calendarDateClicked(event,b.dataset.day));
   selectionStatus();
 }
 function drawDay(){const d=get(selected),m=state(selected),dur=durations(selected),total=minutes(selected),completed=done(selected),br=totalBreakMinutes(selected),remain=960-total-br;
@@ -620,6 +734,8 @@ el('applySelected').onclick=applyCalendarSelection;
 el('clearSelected').onclick=()=>{selectedDates.clear();selectionAnchor=null;awaitingEnd=false;selectionFeedback='Selección limpiada; no se modificó ninguna fecha.';drawCalendar()};
 el('selectedDayType').onchange=()=>selectionStatus();
 el('resetOrder').onclick=resetOrder;
+el('openDayReport').onclick=()=>openDayReport(selected);
+el('closeDayReport').onclick=closeDayReport;
 el('addTaskForm').onsubmit=e=>{e.preventDefault();addActivity()};
 el('breakForm').onsubmit=e=>{e.preventDefault();addBreak()};
 el('automaticBreaks').onclick=restoreAutomaticBreaks;
