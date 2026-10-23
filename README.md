@@ -12,13 +12,24 @@ Para una prueba local, sirve este directorio mediante un servidor HTTP sencillo 
 
 ## Tipos de día
 
-**Los días sin asignación explícita se muestran como «No definido»**, y no contienen tareas pendientes. Desde el selector de cada fecha, puedes elegir:
+**Los días sin asignación explícita se muestran como «No definido»**, y no contienen tareas pendientes. El panel de cada fecha muestra su estado sin duplicar todos los tipos en un selector.
 
 - **No definido:** sin actividades programadas.
 - **Libre / estudio:** cursos y materias normales.
 - **Evaluación:** aparecen las dos actividades universitarias y se prioriza su tiempo; las demás actividades inicialmente usan la mitad de su duración.
+- **Día de proyecto:** jornada para desarrollar proyectos, con tareas propias del proyecto en lugar de los cursos regulares.
 - **Viaje:** sin tareas programadas.
 - **No disponible:** sin tareas programadas.
+
+### Definir o quitar un día de proyecto
+
+1. Pon **«Seleccionar» en «Un día (normal)»** y haz clic en la fecha deseada.
+2. En el panel del día, pulsa **«Marcar día de proyecto»**. El calendario mostrará ese día en azul verdoso y habilitará sus tareas de proyecto.
+3. Añade actividades con **«Solo este día»** o **«Todos los días de proyecto»**. Las tareas con esta segunda opción reaparecen en otros días que también marques como proyecto.
+4. Para desmarcarlo, pulsa **«Quitar día de proyecto»**: la fecha vuelve a **«No definido»**, sin borrar las actividades ni su progreso histórico.
+5. Si una fecha estaba marcada como estudio, evaluación, viaje o no disponible, se pedirá confirmación antes de convertirla en proyecto; sus registros se conservarán.
+
+Las materias habituales (Coursera, física, matemáticas, etc.) y las tareas universitarias no se muestran automáticamente durante un día de proyecto. Las tareas de proyecto tampoco se mezclan con los días de estudio.
 
 ### Selección directa de viaje, días no disponibles o días no definidos
 
@@ -37,7 +48,13 @@ Puedes seleccionar días de varios meses antes de aplicar los cambios. La selecc
 
 ### Días de estudio y evaluaciones
 
-La sección **«Definir días de estudio y evaluación por intervalo»** se conserva para asignar **Libre / estudio**, **Evaluación** o volver un rango a **No definido**. El cambio no altera los registros de otros días. Para Viaje o No disponible de varias fechas, utiliza preferentemente la selección directamente en el calendario.
+La sección **«Definir días de estudio y evaluación por intervalo»** se conserva solo para asignar **Libre / estudio** o **Evaluación**. Se eliminó su control redundante de limpieza: para volver un rango a **No definido**, usa la selección múltiple directamente sobre el calendario.
+
+Así quedan organizadas las responsabilidades para evitar duplicaciones:
+
+- **Un día (normal):** ver el estado actual, tareas y marcar/desmarcar **Día de proyecto**.
+- **Selección múltiple:** asignar **Viaje**, **No disponible** o **No definido** a varios días, incluidos intervalos entre meses.
+- **Intervalo de estudio/evaluación:** asignar **Libre / estudio** o **Evaluación** para periodos específicos.
 
 ## Persistencia SQLite (local al navegador)
 
@@ -73,7 +90,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 
 - Selección automática de la fecha actual al abrir el calendario.
 - Duraciones editables; actividades completadas y pendientes, horarios y tiempo disponible.
-- Añadir tareas para una fecha, días de estudio o días de evaluación.
+- Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
 - Guardar un nuevo periodo sin borrar los registros de otros periodos; limpiar los campos de fecha sin eliminar los datos; recuperar intervalos anteriores.
