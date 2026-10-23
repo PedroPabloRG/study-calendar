@@ -21,8 +21,9 @@ Abre el archivo `index.html` en Chrome, Edge o Firefox. Selecciona fechas y marc
 - Actividades universitarias visibles únicamente durante evaluaciones.
 - Creación de actividades personalizadas para un día, todos los días de estudio o evaluaciones.
 - Reordenamiento de actividades por día y opción de quitarlas y restaurarlas.
-- **Eliminar permanentemente desde cada actividad:** junto a cada tarea verás los botones `↑`, `↓`, `Quitar` y `🗑 Eliminar`. Pulsa `🗑 Eliminar` y confirma para borrar la actividad y su progreso de **todas las fechas**. También se puede borrar desde la lista de actividades quitadas, o desde «Administrar actividades» cuando la tarea no esté visible en el día actual. Para ocultarla solamente en la fecha seleccionada utiliza `Quitar`.
-- **Verificar la actualización:** bajo el título del calendario debe aparecer `Actualización 23/10/2026 · Botón «🗑 Eliminar» disponible en cada actividad`. Si no aparece, fuerza la actualización del navegador con `Ctrl + F5` y verifica el estado de GitHub Pages.
+- **Eliminar permanentemente desde cada actividad:** junto a cada tarea verás los botones `↑`, `↓`, `Quitar`, `✎ Renombrar` y `🗑 Eliminar`. Pulsa `🗑 Eliminar` y confirma para borrar la actividad y su progreso de **todas las fechas**. También se puede borrar desde la lista de actividades quitadas, o desde «Administrar actividades» cuando la tarea no esté visible en el día actual. Para ocultarla solamente en la fecha seleccionada utiliza `Quitar`.
+- **Renombrar actividades:** pulsa `✎ Renombrar` junto a una actividad visible, en la lista de quitadas o en «Administrar actividades». Introduce un nombre de 1 a 80 caracteres. Se actualizará en todas las fechas y se conservarán las duraciones, el orden y el progreso. Funciona con actividades originales y personalizadas.
+- **Verificar la actualización:** bajo el título del calendario debe aparecer `Actualización 23/10/2026 · Botones «✎ Renombrar» y «🗑 Eliminar» disponibles en cada actividad`. Si no aparece, fuerza la actualización del navegador con `Ctrl + F5` y verifica el estado de GitHub Pages.
 - Evaluaciones por rango de fechas.
 - Visualización del tiempo ocupado, descansos y tiempo restante.
 - Exportación e importación de respaldos JSON.
