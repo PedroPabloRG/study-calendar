@@ -3,8 +3,8 @@
 <title>Mi calendario de estudios</title>
 <style>
 :root{color-scheme:dark;font:15px system-ui,Segoe UI,sans-serif;background:#0b1120;color:#eef3ff}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1420px;margin:auto;padding:24px}h1{margin:0 0 8px;font-size:30px}h2{margin:0 0 15px;font-size:19px}p,small{color:#b3c3dc}header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}.grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}.panel,.metric{background:#151f35;border:1px solid #31405c;border-radius:16px;padding:19px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric b{font-size:24px;display:block;margin-top:6px}.toolbar,.controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button,input,select{font:inherit;color:#ecf2ff;background:#1e304d;border:1px solid #465b7a;border-radius:9px;padding:8px 11px}button{cursor:pointer}button:hover{border-color:#8eabff}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #91aeff}input[type=number]{width:88px}input[type=date]{max-width:160px}input[type=checkbox]{accent-color:#51c9a3;width:18px;height:18px}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.weekday{text-align:center;color:#acc0db;padding:8px 0}.date{min-height:79px;width:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;padding:8px;background:#20304a}.date.selected{outline:2px solid #93acff;background:#344b78}.date.today{box-shadow:inset 0 0 0 2px #53d6a2}.date.today b::after{content:' · hoy';font-size:10px;font-weight:600;color:#68dfb5}.date.undefined{background:#1a283d}.date.travel{background:#392b45}.date.evaluation{background:#4a392a}.date.off{background:#30363b}.date.out{opacity:.45}.date small{font-size:10px}.progress{background:#445575;width:100%;height:5px;border-radius:6px;overflow:hidden}.progress i{display:block;background:#60caa8;height:100%}.task{display:grid;grid-template-columns:24px 94px minmax(100px,1fr) 88px;align-items:center;gap:8px;border:1px solid #31415c;border-radius:11px;padding:9px;margin-bottom:8px;background:#1b2a43}.task.done .name{text-decoration:line-through;opacity:.7}.remove-task{background:#462b39;border-color:#80516a;color:#ffdce5;font-size:12px}.add-task{display:flex;align-items:end;flex-wrap:wrap;gap:9px;padding:14px 0;margin:10px 0 14px;border-top:1px solid #31415c;border-bottom:1px solid #31415c}.add-task label{display:flex;flex-direction:column;gap:5px;color:#b3c3dc;font-size:12px}.add-task input[type=text]{width:min(280px,80vw)}.add-task button{background:#225944;border-color:#439b75;color:#fff}.add-task button:disabled{opacity:.4;cursor:not-allowed}.task-actions{grid-column:2/-1;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}.task-actions button{padding:7px 9px;line-height:1.2}.rename-task{background:#244b70;border-color:#5386b4;color:#eef7ff;font-weight:600}.rename-task:hover{background:#315d87;border-color:#9ac1e8}.removed-item button.rename-task,.manage-item button.rename-task{background:#244b70;border-color:#5386b4;color:#eef7ff}.delete-task{background:#732637;border-color:#c25e71;color:#fff;font-weight:700}.delete-task:hover{background:#963248;border-color:#ef8ea0}.delete-task:focus-visible{outline:2px solid #ffd2db}.move-task{min-width:29px;font-weight:700}.move-task:disabled{opacity:.3;cursor:not-allowed}.removed-list{margin-top:18px;border-top:1px solid #31415c;padding-top:13px}.manage-panel{border:1px solid #3e526f;border-radius:12px;padding:12px;margin:14px 0}.manage-panel summary{cursor:pointer;font-weight:650;color:#f2f6ff}.manage-item{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #2e425e;padding:10px 0}.manage-item:last-child{border:0}.manage-item button{border-color:#ad5e6d;background:#522b38;color:#ffe0e6;font-size:12px}.manage-item button:hover{border-color:#ff95a7}.manage-item small{display:block;font-size:11px;margin-top:3px}.period-status{padding:10px 12px;border-radius:9px;background:#213752;color:#e9f6ff}.period-history{margin:12px 0;border:1px solid #3a4e68;border-radius:10px;padding:11px}.period-history summary{cursor:pointer;font-weight:600}.period-history-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;padding:8px;border-top:1px solid #344765}.period-history-row button{flex-shrink:0}.manager-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.removed-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #263751}.removed-item button{background:#234637;border-color:#4b9072}.removed-item button.delete-task{background:#732637;color:white;border-color:#c25e71}.muted{color:#aebed4}.time{font-variant-numeric:tabular-nums;color:#b7c9e6;font-size:12px}.pause{margin:8px 0;padding:9px 12px;background:#333343;border-left:3px solid #e0b476;border-radius:6px;font-size:12px}.notice{background:#4b3028;padding:11px;border-radius:9px;color:#ffcc9e}.summary{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}.summary span{background:#243550;padding:8px;border-radius:8px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.full{grid-column:1/-1}.stack{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.bar{display:flex;background:#24344d;height:12px;border-radius:8px;overflow:hidden;margin:15px 0}.bar .study{background:#718ef0}.bar .break{background:#e2b477}.bar .free{background:#4dbd9e}footer{padding:20px 0;color:#9fb1ca;font-size:12px}@media(max-width:980px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:530px){.wrap{padding:11px}.panel{padding:12px}.date{min-height:69px;padding:5px}.task{grid-template-columns:20px 78px minmax(80px,1fr) 73px;gap:4px;padding:6px}.task-actions{grid-column:2/-1;justify-self:stretch;justify-content:flex-end;gap:5px}.task-actions button{padding:6px 8px}.task input[type=number]{width:70px}.time{font-size:10px}}
-</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Fechas persistentes, limpiar campos y recuperar periodos anteriores</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar respaldo</button><label>Importar respaldo <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label></div></header>
+.sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · SQLite en el navegador · Días sin asignar: No definido</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Tiempo completado</small><b id="complete"></b></div><div class="metric"><small>Tiempo pendiente</small><b id="pending"></b></div><div class="metric"><small>Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small id="activePeriodShort">Periodo activo guardado</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><div class="calendar" id="calendar"></div><p><small>Los días sin asignar se muestran como «No definido». Morado: viaje. Naranja: evaluación. Verde: progreso.</small></p><h2>Distribución diaria</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>16 horas disponibles entre las 05:00 y las 21:00. El tiempo libre no se agenda automáticamente.</small></p></section>
 <section class="panel"><div class="row"><div><h2 id="selectedTitle"></h2><small id="selectedDate"></small></div><button id="reset">Restablecer día</button></div><div class="controls"><label>Tipo de día <select id="mode"><option value="undefined">No definido</option><option value="free">Libre / estudio</option><option value="evaluation">Evaluación</option><option value="travel">Viaje</option><option value="off">No disponible</option></select></label><label>Descansos (min) <input id="breaks" type="number" min="0" max="960" step="5"></label><button id="resetOrder" title="Dejar el orden original sin borrar actividades ni progreso">Restablecer orden</button></div><p><small>Usa ↑ y ↓ para cambiar la posición de cada actividad. El horario se ajustará automáticamente; el orden se guarda por día.</small></p><div class="summary" id="summary"></div><form id="addTaskForm" class="add-task">
@@ -28,7 +28,8 @@
 <label>Tipo de día <select id="rangeMode"><option value="free">Libre / estudio</option><option value="evaluation">Evaluación</option><option value="travel">Viaje</option><option value="off">No disponible</option><option value="undefined">No definido</option></select></label>
 <button type="button" id="markEval">Aplicar a fechas</button><button type="button" id="clearEval">Dejar rango no definido</button>
 <button type="button" id="clearEvalInputs">Limpiar campos de intervalo</button></div>
-<p><small>Puedes asignar días individualmente o aplicar un tipo a todo un rango, incluidos los sábados. Los demás días quedan como «No definido». Limpiar los campos no cambia los días ya asignados. Las dos tareas universitarias solamente se muestran durante evaluaciones.</small></p></section></div><footer>Versión con eliminación permanente visible · Guardado local en este navegador. Exporta respaldos JSON periódicamente para conservar tus datos.</footer></main>
+<p><small>Puedes asignar días individualmente o aplicar un tipo a todo un rango, incluidos los sábados. Los demás días quedan como «No definido». Limpiar los campos no cambia los días ya asignados. Las dos tareas universitarias solamente se muestran durante evaluaciones.</small></p></section></div><footer>Versión con eliminación permanente visible · SQLite en IndexedDB del navegador, sin sincronización entre dispositivos. Exporta copias SQLite o JSON periódicamente para conservar tus datos.</footer></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.min.js"></script><script src="./sqlite-storage.js"></script>
 <script>
 (()=>{'use strict';
 const NAMES=['Universidad: actividad 1','Universidad: actividad 2','Inglés en teléfono','Subir música a WhatsApp','Coursera','OpenAI Academy','Cálculo diferencial','Cálculo integral','Física','Matemáticas generales'],BASE=[90,90,30,15,60,45,60,60,60,45],FIXED_COUNT=10,KEY='study-calendar-v2';
@@ -41,7 +42,19 @@ function syncCatalog(){
     NAMES[i]=typeof override==='string'&&override.trim()&&override.length<=80?override:DEFAULT_NAMES[i];
   }if(!Array.isArray(db.catalog))db.catalog=[];db.catalog.forEach(c=>{NAMES.push(c&&typeof c.name==='string'?c.name:'Actividad eliminada');BASE.push(c&&Number.isFinite(Number(c.duration))?Math.max(5,Math.min(960,Math.round(Number(c.duration)))):0)})}
 syncCatalog();
-const initialDate=new Date();let selected='',year=initialDate.getFullYear(),month=initialDate.getMonth();const el=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0'),iso=d=>[d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-'),date=s=>new Date(s+'T12:00:00'),sat=s=>date(s).getDay()===6,initialMode=s=>'undefined',fmt=n=>Math.floor(Math.abs(n)/60)+'h '+pad(Math.abs(n)%60)+'m',clock=n=>pad(Math.floor(n/60))+':'+pad(n%60),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch{alert('No se pudo guardar. Exporta un respaldo.')}};
+const initialDate=new Date();let sqliteEnabled=false;let selected='',year=initialDate.getFullYear(),month=initialDate.getMonth();const el=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0'),iso=d=>[d.getFullYear(),pad(d.getMonth()+1),pad(d.getDate())].join('-'),date=s=>new Date(s+'T12:00:00'),sat=s=>date(s).getDay()===6,initialMode=s=>'undefined',fmt=n=>Math.floor(Math.abs(n)/60)+'h '+pad(Math.abs(n)%60)+'m',clock=n=>pad(Math.floor(n/60))+':'+pad(n%60),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),save=()=>{
+  db._revision=Math.max(Date.now(),(Number(db._revision)||0)+1);
+  try{localStorage.setItem(KEY,JSON.stringify(db))}
+  catch(error){el('dbStatus').textContent='⚠ No se pudo guardar el respaldo JSON local';}
+  if(sqliteEnabled){
+    try{
+      window.StudySQLite.save(db).then(
+        ()=>{el('dbStatus').textContent='SQLite · guardado local';el('dbStatus').classList.remove('warning')},
+        error=>{el('dbStatus').textContent='⚠ SQLite sin guardar: '+error.message;el('dbStatus').classList.add('warning')}
+      );
+    }catch(error){el('dbStatus').textContent='⚠ SQLite: '+error.message;el('dbStatus').classList.add('warning')}
+  }
+};
 selected=iso(initialDate);
 let periodDraftStart=db.start,periodDraftEnd=db.end;
 function get(s){if(!db.days[s])db.days[s]={mode:initialMode(s),dur:null,done:[],breaks:90};return db.days[s]}
@@ -224,6 +237,43 @@ function dateRange(fn){const a=el('evalStart').value,b=el('evalEnd').value;if(!d
 el('markEval').onclick=()=>dateRange(s=>modeChange(s,el('rangeMode').value));el('clearEval').onclick=()=>dateRange(s=>modeChange(s,'undefined'));
 el('backup').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-calendario.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)};
 el('restore').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const o=JSON.parse(await file.text());if(!o||typeof o.days!=='object'||typeof o.start!=='string'||typeof o.end!=='string')throw Error('Formato incorrecto');if(confirm('¿Reemplazar el calendario con el respaldo importado?')){db=o;syncCatalog();periodDraftStart=db.start;periodDraftEnd=db.end;save();render()}}catch(err){alert('No se pudo importar: '+err.message)}e.target.value=''};
-render();
+el('downloadSqlite').onclick=()=>{
+  if(!sqliteEnabled){alert('SQLite no está disponible; utiliza Exportar JSON.');return}
+  try{
+    const bytes=window.StudySQLite.exportDatabase();
+    const blob=new Blob([bytes],{type:'application/vnd.sqlite3'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='calendario-estudios.sqlite';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }catch(error){alert('No se pudo exportar SQLite: '+error.message)}
+};
+el('importSqlite').onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    if(!sqliteEnabled)throw Error('SQLite no está disponible en este navegador.');
+    if(!confirm('¿Reemplazar TODOS los datos actuales con los de este archivo SQLite? Puedes exportar una copia antes.'))return;
+    const state=await window.StudySQLite.importDatabase(new Uint8Array(await file.arrayBuffer()));
+    if(!state||!state.days||typeof state.start!=='string'||typeof state.end!=='string')throw Error('Datos del calendario inválidos');
+    db=state;syncCatalog();periodDraftStart=db.start;periodDraftEnd=db.end;save();render();
+  }catch(error){alert('No se pudo importar SQLite: '+error.message)}
+  finally{e.target.value=''}
+};
+(async function boot(){
+  try{
+    if(!window.StudySQLite)throw Error('Motor SQLite no disponible');
+    const loaded=await window.StudySQLite.initialize(db);
+    db=loaded;syncCatalog();sqliteEnabled=true;
+    el('dbStatus').textContent='SQLite activo · datos en este navegador';
+    el('downloadSqlite').disabled=false;
+  }catch(error){
+    sqliteEnabled=false;
+    el('dbStatus').textContent='⚠ SQLite no disponible; respaldo local JSON: '+error.message;
+    el('dbStatus').classList.add('warning');
+  }
+  periodDraftStart=db.start;periodDraftEnd=db.end;
+  render();
+})().catch(error=>{
+  el('dbStatus').textContent='⚠ Error de inicio: '+error.message;
+  el('dbStatus').classList.add('warning');
+});
 })();
 </script></body></html>
