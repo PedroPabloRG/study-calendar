@@ -25,13 +25,15 @@ Todas las fechas sin asignación explícita se muestran como **No definido**. Lo
 
 ### Cómo seleccionar y asignar fechas
 
-1. En **Seleccionar**, elige **Varios días** para marcar fechas separadas (el segundo clic desmarca) o **Intervalo (dos clics)** para seleccionar todos los días entre una fecha inicial y final.
-2. Es posible cambiar de mes sin perder la selección temporal; en computadora también puedes usar **Mayús + clic** en el modo de varios días para seleccionar un tramo.
-3. En **Definir como**, elige cualquiera de los seis estados, incluido **Día de proyecto**.
-4. Pulsa **Aplicar a días seleccionados** y confirma. Los cambios se guardan en SQLite local y en el respaldo JSON.
-5. **Limpiar selección** únicamente desmarca los días resaltados. Para cambiar su estado a **No definido**, usa esa opción del selector y después pulsa el botón de aplicar.
+Los tres modos admiten trabajar con una sola fecha:
 
-El modo **Un día (normal)** sigue sirviendo para abrir una fecha y consultar o gestionar sus actividades. La sección separada de clasificación por intervalos y el botón individual de proyecto se retiraron por ser redundantes.
+1. **Un día (consultar y asignar):** modo inicial. Haz **un solo clic** sobre una fecha: se abre su panel de actividades, queda resaltada como seleccionada y se habilita el botón **Aplicar**. No es necesario pasar a «Varios días» para clasificar una sola fecha.
+2. **Varios días:** permite seleccionar **una o varias fechas** con clics independientes; un segundo clic sobre una fecha seleccionada la desmarca. En computadora, **Mayús + clic** selecciona un intervalo desde la fecha anterior.
+3. **Intervalo (dos clics):** desde el **primer clic** la fecha ya está seleccionada y puedes aplicar el estado solamente a ese día. Si haces un segundo clic en otra fecha, se selecciona el intervalo completo entre ambas, incluso entre meses.
+4. En **Definir como**, elige cualquiera de los seis estados (No definido, Libre / estudio, Evaluación, Día de proyecto, Viaje o No disponible), pulsa **Aplicar** y confirma. Las asignaciones se guardan en SQLite local y en el respaldo JSON.
+5. **Limpiar selección** solo desmarca fechas resaltadas sin modificar sus estados. Para clasificar fechas como **No definido**, elige ese estado y pulsa **Aplicar**.
+
+La selección activa se destaca visualmente en el calendario. Las actividades del día, las duraciones y el progreso se conservan al cambiar su clasificación. Los cambios confirmados quedan registrados en el historial de selecciones.
 
 ### Resumen de periodos e historial de fechas
 
