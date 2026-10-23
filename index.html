@@ -102,7 +102,7 @@
 .day-report-warning{padding:12px;border-radius:9px;border:1px solid #b4824b;background:#413021;color:#ffe2b5}
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Carga diaria según hora actual · Historial y SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Deslizadores de inicio y finalización · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Duración marcada como completada</small><b id="complete"></b></div><div class="metric"><small>Duración pendiente</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
@@ -782,6 +782,7 @@ function openDayReport(s){
   const events=[];
   tasks.forEach(({i,v},position)=>events.push({
     createdAt:creationStampForActivity(i),kind:'task',i,minutes:v,
+    timing:activityTiming(s,i),
     done:(d.done||[]).includes(i),position
   }));
   pauses.forEach((pause,position)=>events.push({
@@ -794,9 +795,15 @@ function openDayReport(s){
   const renderEvent=item=>{
     const label=item.kind==='task'?esc(NAMES[item.i]):'☕ '+esc(item.label);
     const kind=item.kind==='task'?'de actividad':'de descanso';
+    const timing=item.kind==='task'?item.timing:{};
+    const timeDetails=item.kind==='task'
+      ?'<small>Inicio: '+esc(timeStampFull(timing.startedAt,timing.startSource))+'</small>'+
+       '<small>Finalización: '+esc(timeStampFull(timing.finishedAt,timing.finishSource))+'</small>'+
+       (activityTrackedSpan(s,item.i)?'<small>'+esc(activityTrackedSpan(s,item.i))+'</small>':'')
+      :'';
     return '<div class="day-report-line '+(item.kind==='break'?'pause-line ':'')+(item.done?'done':'')+'">'+
       '<span class="report-clock">'+esc(creationLabel(item.createdAt))+'</span>'+
-      '<span class="report-label"><strong>'+label+'</strong><small>'+fmt(item.minutes)+' previstos '+kind+'</small></span>'+
+      '<span class="report-label"><strong>'+label+'</strong><small>'+fmt(item.minutes)+' previstos '+kind+'</small>'+timeDetails+'</span>'+
       '<span class="day-report-state">'+(item.done?'✓ Completad'+(item.kind==='task'?'a':'o'):'Pendiente')+'</span></div>';
   };
   let timeline='';
@@ -813,6 +820,8 @@ function openDayReport(s){
     metric('Actividades completadas',finishedTasks+' / '+tasks.length)+
     metric('Progreso de actividades',progress+'%')+
     metric('Minutos de actividades previstos',fmt(planned))+
+    metric('Inicios registrados',tasks.filter(t=>validCreationStamp(activityTiming(s,t.i).startedAt)).length+' / '+tasks.length)+
+    metric('Finalizaciones registradas',tasks.filter(t=>validCreationStamp(activityTiming(s,t.i).finishedAt)).length+' / '+tasks.length)+
     metric('Descansos completados',finishedPauses+' / '+pauses.length)+
     metric('Descansos previstos',fmt(restMinutes))+
     metric(cap.kind==='past'?'Progreso histórico':cap.kind==='today'?'Margen libre hasta las 21:00':'Capacidad sin asignar',
@@ -828,7 +837,7 @@ function openDayReport(s){
       (cap.kind==='past'?'Fecha pasada: se presenta el avance registrado, no se supone que quedaba tiempo libre.':
        cap.kind==='today'?'Hoy, '+cap.clockText+': quedan '+fmt(cap.capacity)+' hasta las 21:00; el margen considera solo tareas y pausas pendientes.':
        'Fecha futura: se conserva una referencia de 16 horas para planificar.')+
-      ' Las fechas de creación no indican horas de inicio o fin. Los minutos son estimaciones y no prueban tiempo trabajado.</p>'+
+      ' La creación, el inicio y la finalización son registros distintos. Los botones «Ahora» capturan el reloj del dispositivo; los deslizadores representan horas ajustadas manualmente. Las duraciones previstas no prueban tiempo trabajado.</p>'+
     (cap.overflow?'<p class="day-report-warning">La carga '+(cap.kind==='today'?'pendiente':'prevista')+' supera el tiempo disponible por '+fmt(cap.overflow)+'.</p>':'')+
     '<h3 class="day-report-section-title">Registro de actividades y descansos del día</h3>'+timeline+
     (!activeDay?'<p><small>Los registros de actividades anteriores se conservan, pero no se muestran mientras el día tenga este estado.</small></p>':'');
@@ -870,7 +879,7 @@ const desiredScope=isProject
 if(scopeSelect.innerHTML!==desiredScope)scopeSelect.innerHTML=desiredScope;
 drawBreakPlanner(selected);el('resetOrder').disabled=!active(selected);el('addTaskButton').disabled=!active(selected);
 if(!active(selected)){el('tasks').innerHTML='<div class="notice">'+(m==='undefined'?'Día no definido. Utiliza la selección múltiple del calendario para asignarle un estado.':'Día de '+(m==='travel'?'viaje':'descanso o indisponibilidad')+'. Utiliza la selección múltiple del calendario para cambiar su estado.')+'</div>';el('removedTasks').innerHTML='';return}
-let rows='<div class="recorded-note">El horario real no se deduce de las duraciones. Se indica la fecha y hora en que se creó cada actividad o descanso. Los minutos son previstos.</div>';
+let rows='<div class="recorded-note">Cada actividad tiene un control «⏱ Registro de tiempo»: desliza la hora de inicio o de finalización, o usa «Iniciar ahora» y «Finalizar ahora» en el día actual. El reloj real y los ajustes manuales se distinguen claramente. La duración planificada permanece independiente.</div>';
 const valid=visibleTasks(selected),scheduledBreaks=breakPlanFor(selected,valid);
 const breakAnchors=new Map();
 for(const item of scheduledBreaks){
