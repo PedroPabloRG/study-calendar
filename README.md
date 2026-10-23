@@ -56,7 +56,7 @@ Para cerrar, pulsa **«Cerrar reporte»** o utiliza **Esc**. En teléfonos y com
 La sección antigua **«Periodos de planificación»** fue reemplazada por tres vistas que se generan automáticamente:
 
 - **Resumen de periodos y fechas:** cantidad de días clasificados en cada tipo (incluidos los días devueltos intencionalmente a «No definido»), número de periodos consecutivos y progreso acumulado visible.
-- **Periodos clasificados:** grupos de fechas consecutivas que actualmente tienen el mismo estado; muestra inicio, fin, número de días, tiempo programado y completado. El botón **«Ver fecha»** abre una de sus fechas.
+- **Periodos clasificados:** grupos de fechas consecutivas que actualmente tienen el mismo estado; muestra inicio, fin, número de días, tiempo programado y completado. El botón **«Ver fecha»** abre la fecha inicial del periodo, cambia al mes correspondiente, desplaza la pantalla hasta la casilla y la resalta temporalmente. Se mantiene accesible con el teclado.
 - **Historial de selecciones aplicadas:** cada confirmación de la selección múltiple registra la fecha/hora de la operación, el estado aplicado, las fechas exactas seleccionadas, las que cambiaron, y el estado anterior y nuevo de cada fecha. Permite revisar cambios aunque más adelante vuelvas a clasificar los mismos días.
 
 **Importante:** los días ya clasificados antes de esta función aparecen en el resumen actual, pero no se inventan fechas de modificaciones anteriores: el historial de operaciones comienza a registrarse con las nuevas selecciones. Las fechas y la configuración de antiguos periodos permanecen en los datos guardados por compatibilidad con respaldos anteriores, aunque ya no existe el formulario de periodos activos ni limita visualmente las fechas del calendario.
