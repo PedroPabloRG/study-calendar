@@ -62,7 +62,7 @@
 .capacity-legend{display:flex;flex-wrap:wrap;gap:8px 15px;font-size:12px;color:#c1cee5}
 .capacity-legend .legend-entry{display:inline-flex;align-items:center;gap:7px}
 .capacity-legend i{display:inline-block;width:10px;height:10px;border-radius:3px}
-.capacity-legend .study{background:#718ef0}.capacity-legend .break{background:#e2b477}.capacity-legend .free{background:#4dbd9e}.capacity-legend .historical-pending{background:#66748c}footer{padding:20px 0;color:#9fb1ca;font-size:12px}@media(max-width:980px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:530px){.wrap{padding:11px}.panel{padding:12px}.date{min-height:69px;padding:5px}.task{grid-template-columns:20px 78px minmax(80px,1fr) 73px;gap:4px;padding:6px}.task-actions{grid-column:2/-1;justify-self:stretch;justify-content:flex-end;gap:5px}.task-actions button{padding:6px 8px}.task input[type=number]{width:70px}.time{font-size:10px}}
+.capacity-legend .study{background:#718ef0}.capacity-legend .break{background:#e2b477}.capacity-legend .free{background:#4dbd9e}.capacity-legend .historical-pending{background:#66748c}.capacity-note{border:1px solid #536881;color:#c8d7ec;background:#203047;padding:10px 12px;border-radius:8px;margin-top:12px}footer{padding:20px 0;color:#9fb1ca;font-size:12px}@media(max-width:980px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:530px){.wrap{padding:11px}.panel{padding:12px}.date{min-height:69px;padding:5px}.task{grid-template-columns:20px 78px minmax(80px,1fr) 73px;gap:4px;padding:6px}.task-actions{grid-column:2/-1;justify-self:stretch;justify-content:flex-end;gap:5px}.task-actions button{padding:6px 8px}.task input[type=number]{width:70px}.time{font-size:10px}}
 .day-report{box-sizing:border-box;position:fixed;margin:auto;border:1px solid #4d6b8c;border-radius:20px;background:#111d32;color:#eef4ff;width:min(920px,calc(100vw - 26px));max-width:920px;max-height:calc(100vh - 34px);padding:0;overflow:auto;box-shadow:0 28px 90px #030916e8}
 .day-report::backdrop{background:#050b19d9;backdrop-filter:blur(5px)}
 .day-report-shell{padding:clamp(15px,3vw,31px)}
@@ -89,7 +89,7 @@
 .day-report-warning{padding:12px;border-radius:9px;border:1px solid #b4824b;background:#413021;color:#ffe2b5}
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Hora real de creación · Actividades y descansos · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Carga diaria según hora actual · Historial y SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Duración marcada como completada</small><b id="complete"></b></div><div class="metric"><small>Duración pendiente</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
@@ -639,7 +639,8 @@ function openDayReport(s){
   const type=state(s),status=DAY_TYPES[type]||'No definido',activeDay=active(s);
   const d=get(s),tasks=activeDay?visibleTasks(s):[],pauses=breakPlanFor(s,tasks);
   const planned=minutes(s),completed=done(s),restMinutes=pauses.reduce((v,x)=>v+x.minutes,0);
-  const remaining=960-planned-restMinutes;
+  const cap=capacitySnapshot(s);
+  const remaining=cap.spare;
   const finishedTasks=tasks.filter(x=>(d.done||[]).includes(x.i)).length;
   const finishedPauses=pauses.filter(x=>x.done).length;
   const progress=planned?Math.round(100*completed/planned):0;
@@ -687,14 +688,21 @@ function openDayReport(s){
     metric('Minutos de actividades previstos',fmt(planned))+
     metric('Descansos completados',finishedPauses+' / '+pauses.length)+
     metric('Descansos previstos',fmt(restMinutes))+
-    metric('Capacidad restante estimada',(remaining<0?'−':'')+fmt(remaining));
+    metric(cap.kind==='past'?'Progreso histórico':cap.kind==='today'?'Margen libre hasta las 21:00':'Capacidad sin asignar',
+      cap.kind==='past'?cap.progress+'%':fmt(remaining))+
+    metric(cap.kind==='today'?'Carga pendiente':'Carga planificada',
+      fmt(cap.kind==='past'?planned+restMinutes:cap.demand));
   el('dayReportContent').innerHTML=
     '<div class="day-report-date"><div class="day-report-number">'+number+'</div><div>'+
     '<h2 id="dayReportHeading">'+weekday.charAt(0).toUpperCase()+weekday.slice(1)+'<span style="display:block">'+monthYear+'</span></h2>'+
     '<p>'+s+' · Registro de creaciones y duraciones previstas</p><span class="day-report-badge">'+status+'</span></div></div>'+
     '<div class="day-report-metrics">'+metrics+'</div>'+
-    '<p class="recorded-note">La fecha y la hora indican cuándo se creó cada registro, no cuándo comenzó o terminó el trabajo. Las tareas recurrentes conservan su fecha de creación original. Los minutos y la capacidad restante son estimaciones, no tiempos reales transcurridos.</p>'+
-    (remaining<0?'<p class="day-report-warning">Los minutos previstos superan la referencia de 16 horas por '+fmt(-remaining)+'.</p>':'')+
+    '<p class="recorded-note">'+
+      (cap.kind==='past'?'Fecha pasada: se presenta el avance registrado, no se supone que quedaba tiempo libre.':
+       cap.kind==='today'?'Hoy, '+cap.clockText+': quedan '+fmt(cap.capacity)+' hasta las 21:00; el margen considera solo tareas y pausas pendientes.':
+       'Fecha futura: se conserva una referencia de 16 horas para planificar.')+
+      ' Las fechas de creación no indican horas de inicio o fin. Los minutos son estimaciones y no prueban tiempo trabajado.</p>'+
+    (cap.overflow?'<p class="day-report-warning">La carga '+(cap.kind==='today'?'pendiente':'prevista')+' supera el tiempo disponible por '+fmt(cap.overflow)+'.</p>':'')+
     '<h3 class="day-report-section-title">Registro de actividades y descansos del día</h3>'+timeline+
     (!activeDay?'<p><small>Los registros de actividades anteriores se conservan, pero no se muestran mientras el día tenga este estado.</small></p>':'');
   const dialog=el('dayReportDialog');
@@ -886,6 +894,24 @@ function navigateToDate(day){
   if(cell&&typeof cell.focus==='function')cell.focus({preventScroll:true});
 }
 function render(){drawCalendar();drawManager();drawDay();drawHistory()}
+
+// Refresh only the capacity calculation: preserve partially edited forms.
+function refreshClockDependentCapacity(){
+  if(typeof document.visibilityState==='string'&&document.visibilityState==='hidden')return;
+  drawCapacity(selected,new Date());
+}
+setInterval(refreshClockDependentCapacity,30000);
+if(typeof document.addEventListener==='function'){
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState!=='hidden'){
+      refreshClockDependentCapacity();
+      drawCalendar();
+    }
+  });
+}
+if(typeof window.addEventListener==='function'){
+  window.addEventListener('focus',refreshClockDependentCapacity);
+}
 
 el('periodRuns').onclick=event=>{
   const button=event.target.closest('[data-period-date]');
