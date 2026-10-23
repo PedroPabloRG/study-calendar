@@ -343,9 +343,17 @@ function humanDate(s){return date(s).toLocaleDateString('es-MX',{day:'numeric',m
 function formattedSpan(from,to){return from===to?humanDate(from):humanDate(from)+' – '+humanDate(to)}
 function dayBeforeOrAfter(a,b){return Math.round((Date.parse(b+'T12:00:00Z')-Date.parse(a+'T12:00:00Z'))/86400000)}
 function actualPeriodRuns(){
+  // Only intentional "No definido" resets are shown; opening an unassigned day
+  // must not silently create a classified period in the summary.
+  const resetDates=new Set();
+  for(const action of validHistory()){
+    if(action.type==='undefined'){
+      for(const change of action.changes)if(change&&dateValid(change.day))resetDates.add(change.day);
+    }
+  }
   const days=Object.entries(db.days).filter(([day,record])=>
     dateValid(day)&&record&&Object.prototype.hasOwnProperty.call(DAY_TYPES,record.mode)
-    &&record.mode!=='undefined'
+    &&(record.mode!=='undefined'||resetDates.has(day))
   ).sort((a,b)=>a[0].localeCompare(b[0]));
   const runs=[];
   for(const [day,data] of days){
@@ -373,8 +381,8 @@ function drawHistory(){
   const totalPlanned=runs.reduce((a,run)=>a+run.minutes,0);
   const totalCompleted=runs.reduce((a,run)=>a+run.completed,0);
   el('periodSummary').innerHTML=
-    '<div class="period-stat"><span class="count-label">Fechas clasificadas</span><strong>'+totalAssigned+'</strong><small>'+runs.length+' periodos consecutivos</small></div>'+
-    DAY_ORDER.filter(type=>type!=='undefined').map(type=>
+    '<div class="period-stat"><span class="count-label">Fechas con estado registrado</span><strong>'+totalAssigned+'</strong><small>'+runs.length+' periodos consecutivos</small></div>'+
+    DAY_ORDER.map(type=>
       '<div class="period-stat"><span class="count-label">'+DAY_TYPES[type]+'</span><strong>'+totals[type]+'</strong><small>día'+(totals[type]===1?'':'s')+'</small></div>'
     ).join('')+
     '<div class="period-stat"><span class="count-label">Progreso acumulado visible</span><strong>'+ (totalPlanned?Math.round(totalCompleted*100/totalPlanned):0)+'%</strong><small>'+fmt(totalCompleted)+' / '+fmt(totalPlanned)+'</small></div>';
@@ -401,11 +409,15 @@ function drawHistory(){
     const previous=Object.create(null);
     for(const change of changes)previous[change.from]=(previous[change.from]||0)+1;
     const previousSummary=Object.entries(previous).map(([type,count])=>DAY_TYPES[type]+': '+count).join(' · ');
+    const changeByDate=new Map(changes.map(change=>[change.day,change]));
     return '<details class="selection-entry"><summary>'+DAY_TYPES[item.type]+' · '+(first?formattedSpan(first,last):'Fechas sin información')+'</summary>'+
       '<p><small>Aplicado: '+time+' · '+selectedDays.length+' fecha(s) seleccionada(s) · '+changes.length+' cambio(s)'+
       (item.mode==='range'?' · Intervalo':' · Selección múltiple')+'</small></p>'+
       '<p><small>Estados anteriores: '+(previousSummary||'Sin cambios')+'</small></p>'+
-      '<div class="history-list">'+selectedDays.map(day=>'<span>'+day+'</span>').join('')+'</div></details>';
+      '<div class="history-list">'+selectedDays.map(day=>{
+        const change=changeByDate.get(day);
+        return '<span>'+day+' · '+(change?DAY_TYPES[change.from]+' → '+DAY_TYPES[item.type]:'Sin cambio')+'</span>';
+      }).join('')+'</div></details>';
   }).join(''):'<p><small>No hay asignaciones nuevas registradas todavía. Los periodos actuales anteriores a esta actualización aparecen en el resumen de arriba, pero no es posible reconstruir cuándo se modificaron.</small></p>';
   el('showMoreHistory').hidden=history.length<=visibleHistoryCount;
 }
