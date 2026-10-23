@@ -36,7 +36,7 @@ function durations(s){
   if(!Array.isArray(d.dur))d.dur=[];
   for(let i=d.dur.length;i<NAMES.length;i++){
     const v=BASE[i];
-    d.dur.push(i<FIXED_COUNT?(state(s)==='evaluation'&&i>1?Math.round(v/2/5)*5:v):(eligible(s,i)?v:0));
+    d.dur.push(i<FIXED_COUNT?(state(s)==='evaluation'&&i>1?Math.round(v/2/5)*5:v):v);
   }
   return d.dur;
 }
