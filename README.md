@@ -20,7 +20,21 @@ Para una prueba local, sirve este directorio mediante un servidor HTTP sencillo 
 - **Viaje:** sin tareas programadas.
 - **No disponible:** sin tareas programadas.
 
-En **«Definir tipos de día para un intervalo»** puedes asignar cualquiera de esos estados a un rango completo, incluidos sábados y domingos, o volver a ponerlo como «No definido». Los modos previamente guardados no se modifican durante la actualización: se respeta el historial que ya hayas establecido.
+### Selección directa de viajes y días no disponibles
+
+En el calendario, utiliza el selector **«Seleccionar»** situado sobre las fechas:
+
+1. Elige **«Varios días»** para marcar fechas separadas. Un segundo clic desmarca una fecha. En computadora, **Mayús + clic** marca todas las fechas entre la última seleccionada y la actual.
+2. O elige **«Intervalo (dos clics)»** para indicar la fecha inicial y final de un rango continuo. También funciona sin teclado en teléfonos y permite navegar entre meses para establecer el intervalo.
+3. En **«Definir como»**, selecciona **Viaje** o **No disponible** y pulsa **«Aplicar a días seleccionados»**.
+4. Confirma la asignación. Las fechas se guardan en el almacenamiento local SQLite y en el respaldo JSON. Si una fecha tenía tareas de estudio, sus registros se conservan, aunque no se muestran mientras tenga el tipo Viaje o No disponible.
+5. **«Limpiar selección»** descarta únicamente la selección temporal, sin cambiar estados previamente guardados. Volver a **«Un día (normal)»** permite abrir las actividades de cada fecha.
+
+Puedes seleccionar días de varios meses antes de aplicar los cambios. La selección temporal no se guarda: solo la asignación confirmada. Las fechas que no asignes se mantienen como **No definido**.
+
+### Días de estudio y evaluaciones
+
+La sección **«Definir días de estudio y evaluación por intervalo»** se conserva para asignar **Libre / estudio**, **Evaluación** o volver un rango a **No definido**. El cambio no altera los registros de otros días. Para Viaje o No disponible de varias fechas, utiliza preferentemente la selección directamente en el calendario.
 
 ## Persistencia SQLite (local al navegador)
 
