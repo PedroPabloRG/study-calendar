@@ -1,6 +1,6 @@
 # Calendario interactivo de estudios
 
-Calendario web estático en español, pensado para **GitHub Pages**, con estudios entre las **05:00 y las 21:00** y seguimiento de tareas, periodos y evaluaciones.
+Calendario web estático en español, pensado para **GitHub Pages**, con seguimiento de actividades, descansos, tipos de día, periodos y evaluaciones. Usa una referencia de **16 horas de capacidad diaria** solo para sumar duraciones previstas: no fabrica horarios reales de ejecución.
 
 ## Abrir la aplicación
 
@@ -42,10 +42,10 @@ Haz **tres clics seguidos sobre una misma fecha del calendario** para abrir un r
 El reporte muestra:
 
 - **Fecha en grande**, día de la semana y tipo de día (estudio, evaluación, proyecto, viaje, no disponible o no definido).
-- **Actividades en orden cronológico**, horas de inicio y fin, duración y estado completado/pendiente.
-- **Descansos automáticos o personalizados** intercalados en el horario, con su duración y estado de completado.
-- **Resumen de progreso:** actividades completadas, porcentaje de estudio, descansos completados, tiempo de actividades, tiempo de descansos y tiempo libre restante.
-- **Advertencia** si el horario supera las 16 horas disponibles (05:00–21:00).
+- **Actividades y descansos nuevos ordenados por su fecha y hora reales de creación**, registradas cuando se pulsa «Agregar»; se incluyen la duración prevista y el estado completado/pendiente.
+- **Actividades predefinidas y registros antiguos sin hora registrada** en un apartado independiente, sin atribuirles horas de inicio o fin inventadas.
+- **Resumen de progreso y capacidad estimada:** actividades completadas, porcentaje de progreso, descansos completados, duraciones previstas y capacidad diaria sin planificar.
+- **Advertencia** si la suma de duraciones previstas excede la referencia diaria de 16 horas.
 
 Para cerrar, pulsa **«Cerrar reporte»** o utiliza **Esc**. En teléfonos y como alternativa accesible al triple clic, abre una fecha normalmente y pulsa **«Ver reporte del día»** en el panel de actividades.
 
@@ -69,6 +69,19 @@ Después de asignar **Día de proyecto** desde la selección múltiple, abre una
 
 Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
 
+## Registro real de fecha y hora de creación
+
+Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador captura la fecha y hora **de ese instante** mediante `new Date().toISOString()` y la almacena en los datos del calendario. Para mostrarla se usa la hora local configurada en tu dispositivo (formato de 24 horas). No hay un horario ficticio que empiece a las 05:00 ni se deduce una hora real a partir de la duración.
+
+- **Actividad creada:** almacena el campo `createdAt` en el catálogo de actividades. Una actividad recurrente mantiene la **misma fecha y hora de creación originales** cuando aparece en otros días.
+- **Descanso personalizado creado:** almacena `createdAt` dentro del registro de descansos de esa fecha.
+- **Duración prevista:** permanece editable en minutos, pero no se interpreta como una hora real de inicio o de finalización ni como tiempo efectivo trabajado.
+- **Registros anteriores:** las actividades predefinidas, actividades antiguas sin `createdAt` y pausas automáticas aparecen como **«Sin hora de creación registrada»**. No se generan fechas retroactivas inventadas.
+- **Reporte diario ampliado:** separa registros con marcas de tiempo reales (en orden cronológico de creación) de los registros históricos sin marca de tiempo.
+- **Persistencia:** los campos nuevos se conservan en SQLite local, en su copia JSON y en las exportaciones posteriores. La precisión depende del reloj del dispositivo, por lo que conviene mantenerlo correctamente configurado.
+
+**Importante:** la hora de creación **no indica** cuándo empezaste, terminaste o completaste una actividad; para registrar horas reales de ejecución se requeriría una función de inicio/finalización diferente.
+
 ## Formulario de descansos y comidas
 
 En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proyecto**, el panel de actividades incluye el formulario **«Descansos y comidas»**.
@@ -76,18 +89,18 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 1. En **«Descansar después de»**, elige una actividad programada para ese día.
 2. Escribe un **nombre**, por ejemplo «Desayuno», «Comida», «Caminar» o «Descanso».
 3. Indica una **duración en minutos** (de 5 a 960, en múltiplos de 5) y pulsa **«Agregar descanso»**. Se puede repetir para programar varias pausas, incluso después de la misma actividad.
-4. Cada descanso dispone ahora de una casilla **«Completado»**, tanto en la lista de descansos personalizados como junto a su horario. Marca o desmarca una pausa sin modificar los minutos programados; las dos vistas se mantienen sincronizadas.
+4. Cada descanso dispone de una casilla **«Completado»**, tanto en la lista de descansos personalizados como junto a su registro diario. Marca o desmarca una pausa sin modificar los minutos previstos; las dos vistas se mantienen sincronizadas.
 5. En la lista de descansos puedes editar el **nombre**, la **actividad después de la que ocurre** y la **duración**, o pulsar **«Eliminar pausa»**.
-6. Los descansos aparecen en el horario con sus horas de inicio y fin. El resumen indica **«Descansos completados: X/Y»** por separado de las actividades completadas. Si las actividades y pausas superan las 16 horas disponibles, aparece una advertencia.
+6. Cada descanso personalizado muestra su **fecha y hora reales de creación** en lugar de horas hipotéticas de inicio y fin. El resumen indica **«Descansos completados: X/Y»** por separado de las actividades. Si la suma de duraciones previstas supera la referencia de 16 horas, aparece una advertencia.
 
 ### Compatibilidad y recuperación de los descansos anteriores
 
-- Los días existentes mantienen sus **90 minutos de descanso automático**, repartidos entre actividades. El total automático se puede modificar desde el mismo panel. **Los descansos automáticos también pueden marcarse como completados directamente en el horario.**
+- Los días existentes mantienen sus **90 minutos de descansos automáticos estimados**, distribuidos entre actividades para calcular la capacidad diaria, sin asignarles horas reales inventadas. El total automático se puede modificar desde el mismo panel y sus pausas se pueden marcar como completadas desde la lista del día.
 - **Al agregar el primer descanso personalizado**, ese día utiliza solamente los descansos que definas: ya no se suman automáticamente los 90 minutos anteriores.
 - **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
 - Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
 - En días **No definido**, **Viaje** o **No disponible** no se programan descansos.
-- Cada fecha guarda sus propios descansos y su estado de completado en el registro `calendar_days` del SQLite local y en el respaldo JSON. Los horarios anteriores se mantienen sin necesidad de modificar sus datos originales; las pausas anteriores comienzan sin marcar salvo que ya tengan una marca de completado guardada.
+- Cada fecha guarda sus descansos, sus marcas de completado y, para descansos nuevos, su fecha y hora de creación en `calendar_days` de SQLite y en el respaldo JSON. Los descansos anteriores mantienen su información, sin inventar una hora de creación retrospectiva.
 
 ## Persistencia SQLite (local al navegador)
 
@@ -105,8 +118,8 @@ Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. E
 | Tabla | Contenido |
 | --- | --- |
 | `calendar_meta` | Configuración global, historial de asignaciones de fechas, nombres y ajustes anteriores conservados por compatibilidad (JSON por clave). |
-| `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas, orden y descansos personalizados. |
-| `calendar_activities` | Un registro por índice de actividad personalizada, incluida la marca para elementos eliminados. |
+| `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas, orden, descansos personalizados y sus marcas de creación. |
+| `calendar_activities` | Un registro por índice de actividad personalizada, incluida la fecha y hora real de creación de nuevas tareas y las marcas de eliminación. |
 
 Se escriben las tablas de forma transaccional. El archivo SQLite completo se serializa y se conserva en IndexedDB.
 
@@ -122,7 +135,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 ## Otras funciones
 
 - Selección automática de la fecha actual al abrir el calendario.
-- Duraciones editables; actividades completadas y pendientes, horarios, descansos configurables con casillas de completado y tiempo disponible.
+- Duraciones previstas editables; registro real de creación de actividades y pausas, estados completados o pendientes, y capacidad diaria estimada.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
