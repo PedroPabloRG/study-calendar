@@ -73,7 +73,7 @@
 .day-report-metric small{display:block;font-size:12px}
 .day-report-metric strong{display:block;font-size:21px;margin-top:4px;font-variant-numeric:tabular-nums}
 .day-report-section-title{margin:20px 0 11px;font-size:18px}
-.day-report-line{display:grid;grid-template-columns:110px minmax(0,1fr) auto;align-items:center;gap:13px;padding:12px;margin:8px 0;background:#1c2c44;border:1px solid #304663;border-radius:11px}
+.day-report-line{display:grid;grid-template-columns:minmax(145px,190px) minmax(0,1fr) auto;align-items:center;gap:13px;padding:12px;margin:8px 0;background:#1c2c44;border:1px solid #304663;border-radius:11px}
 .day-report-line.done{border-color:#347b66;background:#1c3a36}
 .day-report-line.pause-line{background:#332f3d;border-color:#6f604e}
 .day-report-line.pause-line.done{background:#234136;border-color:#3e9c76}
@@ -84,7 +84,7 @@
 .day-report-warning{padding:12px;border-radius:9px;border:1px solid #b4824b;background:#413021;color:#ffe2b5}
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Botón «Ver fecha» corregido · Reporte diario y SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Hora real de creación · Actividades y descansos · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Tiempo completado</small><b id="complete"></b></div><div class="metric"><small>Tiempo pendiente</small><b id="pending"></b></div><div class="metric"><small>Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
@@ -542,47 +542,54 @@ function openDayReport(s){
   const monthYear=calendarDate.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
   const number=calendarDate.getDate();
   const metric=(label,value)=>'<div class="day-report-metric"><small>'+label+'</small><strong>'+value+'</strong></div>';
-  let timeline='',time=300;
-  const grouped=new Map();
-  for(const pause of pauses){
-    if(!grouped.has(pause.after))grouped.set(pause.after,[]);
-    grouped.get(pause.after).push(pause);
+
+  // Sort only real recorded timestamps. Existing preset activities and generated
+  // automatic breaks have no historic creation time and must not be backdated.
+  const events=[];
+  tasks.forEach(({i,v},position)=>events.push({
+    createdAt:creationStampForActivity(i),kind:'task',i,minutes:v,
+    done:(d.done||[]).includes(i),position
+  }));
+  pauses.forEach((pause,position)=>events.push({
+    createdAt:pause.createdAt,kind:'break',label:pause.label,
+    minutes:pause.minutes,done:pause.done,position
+  }));
+  const withTimestamp=events.filter(item=>validCreationStamp(item.createdAt))
+    .sort((a,b)=>Date.parse(a.createdAt)-Date.parse(b.createdAt)||a.position-b.position);
+  const withoutTimestamp=events.filter(item=>!validCreationStamp(item.createdAt));
+  const renderEvent=item=>{
+    const label=item.kind==='task'?esc(NAMES[item.i]):'☕ '+esc(item.label);
+    const kind=item.kind==='task'?'de actividad':'de descanso';
+    return '<div class="day-report-line '+(item.kind==='break'?'pause-line ':'')+(item.done?'done':'')+'">'+
+      '<span class="report-clock">'+esc(creationLabel(item.createdAt))+'</span>'+
+      '<span class="report-label"><strong>'+label+'</strong><small>'+fmt(item.minutes)+' previstos '+kind+'</small></span>'+
+      '<span class="day-report-state">'+(item.done?'✓ Completad'+(item.kind==='task'?'a':'o'):'Pendiente')+'</span></div>';
+  };
+  let timeline='';
+  if(withTimestamp.length){
+    timeline+='<h4>Registros con fecha y hora reales</h4>'+
+      withTimestamp.map(renderEvent).join('');
   }
-  for(const task of tasks){
-    const start=time;time+=task.v;
-    const finished=(d.done||[]).includes(task.i);
-    timeline+='<div class="day-report-line '+(finished?'done':'')+'"><span class="report-clock">'+clock(start)+'–'+clock(time)+'</span>'+
-      '<span class="report-label"><strong>'+esc(NAMES[task.i])+'</strong><small>'+fmt(task.v)+' de actividad</small></span>'+
-      '<span class="day-report-state">'+(finished?'✓ Completada':'Pendiente')+'</span></div>';
-    for(const pause of grouped.get(task.i)||[]){
-      const from=time;time+=pause.minutes;
-      timeline+='<div class="day-report-line pause-line '+(pause.done?'done':'')+'"><span class="report-clock">'+clock(from)+'–'+clock(time)+'</span>'+
-        '<span class="report-label"><strong>☕ '+esc(pause.label)+'</strong><small>'+fmt(pause.minutes)+' de descanso</small></span>'+
-        '<span class="day-report-state">'+(pause.done?'✓ Completado':'Pendiente')+'</span></div>';
-    }
+  if(withoutTimestamp.length){
+    timeline+='<h4>Actividades y descansos anteriores sin hora registrada</h4>'+
+      withoutTimestamp.map(renderEvent).join('');
   }
-  if(!tasks.length){
-    timeline='<p><small>Este día no tiene actividades programadas con su estado actual.</small></p>';
-  }
-  if(time<1260){
-    timeline+='<div class="day-report-line"><span class="report-clock">'+clock(time)+'–21:00</span>'+
-      '<span class="report-label"><strong>Tiempo sin asignar</strong><small>'+fmt(1260-time)+' disponible</small></span>'+
-      '<span class="day-report-state">Libre</span></div>';
-  }
+  if(!events.length)timeline='<p><small>Este día no tiene actividades programadas con su estado actual.</small></p>';
   const metrics=
-    metric('Actividades',finishedTasks+' / '+tasks.length)+
-    metric('Progreso académico',progress+'%')+
-    metric('Tiempo de actividades',fmt(planned))+
+    metric('Actividades completadas',finishedTasks+' / '+tasks.length)+
+    metric('Progreso de actividades',progress+'%')+
+    metric('Minutos de actividades previstos',fmt(planned))+
     metric('Descansos completados',finishedPauses+' / '+pauses.length)+
-    metric('Tiempo en descansos',fmt(restMinutes))+
-    metric('Tiempo libre restante',(remaining<0?'−':'')+fmt(remaining));
+    metric('Descansos previstos',fmt(restMinutes))+
+    metric('Capacidad restante estimada',(remaining<0?'−':'')+fmt(remaining));
   el('dayReportContent').innerHTML=
     '<div class="day-report-date"><div class="day-report-number">'+number+'</div><div>'+
     '<h2 id="dayReportHeading">'+weekday.charAt(0).toUpperCase()+weekday.slice(1)+'<span style="display:block">'+monthYear+'</span></h2>'+
-    '<p>'+s+' · Horario de 05:00 a 21:00</p><span class="day-report-badge">'+status+'</span></div></div>'+
+    '<p>'+s+' · Registro de creaciones y duraciones previstas</p><span class="day-report-badge">'+status+'</span></div></div>'+
     '<div class="day-report-metrics">'+metrics+'</div>'+
-    (remaining<0?'<p class="day-report-warning">El horario supera las 16 horas disponibles por '+fmt(-remaining)+'.</p>':'')+
-    '<h3 class="day-report-section-title">Actividades y descansos del día</h3>'+timeline+
+    '<p class="recorded-note">La fecha y la hora indican cuándo se creó cada registro, no cuándo comenzó o terminó el trabajo. Las tareas recurrentes conservan su fecha de creación original. Los minutos y la capacidad restante son estimaciones, no tiempos reales transcurridos.</p>'+
+    (remaining<0?'<p class="day-report-warning">Los minutos previstos superan la referencia de 16 horas por '+fmt(-remaining)+'.</p>':'')+
+    '<h3 class="day-report-section-title">Registro de actividades y descansos del día</h3>'+timeline+
     (!activeDay?'<p><small>Los registros de actividades anteriores se conservan, pero no se muestran mientras el día tenga este estado.</small></p>':'');
   const dialog=el('dayReportDialog');
   if(!dialog.open){
@@ -622,26 +629,40 @@ const desiredScope=isProject
 if(scopeSelect.innerHTML!==desiredScope)scopeSelect.innerHTML=desiredScope;
 drawBreakPlanner(selected);el('resetOrder').disabled=!active(selected);el('addTaskButton').disabled=!active(selected);el('planned').textContent=fmt(total);el('complete').textContent=fmt(completed);el('pending').textContent=fmt(total-completed);el('remaining').textContent=(remain<0?'−':'')+fmt(remain);
 const restProgress=breakProgress(selected);
-el('summary').innerHTML='<span>Disponible: 16h</span><span>Actividades: '+fmt(total)+'</span><span>Pausas: '+fmt(br)+'</span><span>Libre: '+(remain<0?'−':'')+fmt(remain)+'</span><span>Actividades completadas: '+(d.done||[]).filter(i=>active(selected)&&eligible(selected,i)&&!removed(selected,i)).length+'/'+(active(selected)?visibleTasks(selected).length:0)+'</span><span>Descansos completados: '+restProgress.completed+'/'+restProgress.total+'</span>';
-const a=Math.min(960,total),b=Math.min(Math.max(0,960-a),br);el('bar').innerHTML='<div class="study" style="width:'+a/960*100+'%"></div><div class="break" style="width:'+b/960*100+'%"></div><div class="free" style="width:'+Math.max(0,960-a-b)/960*100+'%"></div>';el('warning').innerHTML=remain<0?'<div class="notice">El plan excede el tiempo disponible por '+fmt(-remain)+'. Reduce tareas o descansos.</div>':'';
+el('summary').innerHTML='<span>Disponible: 16h</span><span>Actividades: '+fmt(total)+'</span><span>Pausas: '+fmt(br)+'</span><span>Capacidad estimada: '+(remain<0?'−':'')+fmt(remain)+'</span><span>Actividades completadas: '+(d.done||[]).filter(i=>active(selected)&&eligible(selected,i)&&!removed(selected,i)).length+'/'+(active(selected)?visibleTasks(selected).length:0)+'</span><span>Descansos completados: '+restProgress.completed+'/'+restProgress.total+'</span>';
+const a=Math.min(960,total),b=Math.min(Math.max(0,960-a),br);el('bar').innerHTML='<div class="study" style="width:'+a/960*100+'%"></div><div class="break" style="width:'+b/960*100+'%"></div><div class="free" style="width:'+Math.max(0,960-a-b)/960*100+'%"></div>';el('warning').innerHTML=remain<0?'<div class="notice">Los minutos previstos exceden la referencia de 16 horas por '+fmt(-remain)+'. Reduce tareas o descansos.</div>':'';
 if(!active(selected)){el('tasks').innerHTML='<div class="notice">'+(m==='undefined'?'Día no definido. Utiliza la selección múltiple del calendario para asignarle un estado.':'Día de '+(m==='travel'?'viaje':'descanso o indisponibilidad')+'. Utiliza la selección múltiple del calendario para cambiar su estado.')+'</div>';el('removedTasks').innerHTML='';return}
-let t=300,rows='',valid=visibleTasks(selected),scheduledBreaks=breakPlanFor(selected,valid);
+let rows='<div class="recorded-note">El horario real no se deduce de las duraciones. Se indica la fecha y hora en que se creó cada actividad o descanso. Los minutos son previstos.</div>';
+const valid=visibleTasks(selected),scheduledBreaks=breakPlanFor(selected,valid);
 const breakAnchors=new Map();
 for(const item of scheduledBreaks){
   if(!breakAnchors.has(item.after))breakAnchors.set(item.after,[]);
   breakAnchors.get(item.after).push(item);
 }
-valid.forEach(({v,i},index)=>{const end=t+Number(v),checked=(d.done||[]).includes(i);rows+='<div class="task '+(checked?'done':'')+'"><input type="checkbox" data-check="'+i+'" '+(checked?'checked':'')+' aria-label="Completar '+esc(NAMES[i])+'"><span class="time">'+clock(t)+'–'+clock(end)+'</span><div class="name">'+esc(NAMES[i])+'</div><input type="number" min="0" max="960" step="5" value="'+v+'" data-duration="'+i+'" aria-label="Minutos de '+esc(NAMES[i])+'"><div class="task-actions"><button class="move-task" data-move="'+i+'" data-direction="-1" aria-label="Subir '+esc(NAMES[i])+'" title="Mover arriba" '+(index===0?'disabled':'')+'>↑</button><button class="move-task" data-move="'+i+'" data-direction="1" aria-label="Bajar '+esc(NAMES[i])+'" title="Mover abajo" '+(index===valid.length-1?'disabled':'')+'>↓</button><button class="remove-task" data-remove="'+i+'" aria-label="Quitar '+esc(NAMES[i])+' solo de este día" title="Ocultar solo en esta fecha">Quitar</button><button class="rename-task" data-rename="'+i+'" aria-label="Renombrar '+esc(NAMES[i])+'" title="Cambiar el nombre en todas las fechas">✎ Renombrar</button><button class="delete-task" data-delete-global="'+i+'" aria-label="Eliminar permanentemente '+esc(NAMES[i])+' de todas las fechas" title="Eliminar definitivamente de todas las fechas">🗑 Eliminar</button></div></div>';t=end;
-for(const pause of breakAnchors.get(i)||[]){
-  const duration=pause.minutes;
-  const label=esc(pause.label);
-  const doneAttribute=pause.done?' checked':'';
-  const breakKey=pause.kind+':'+pause.breakIndex;
-  rows+='<label class="pause '+(pause.done?'break-done':'')+'"><input type="checkbox" data-break-complete="'+breakKey+'" aria-label="Marcar como completado el descanso '+label+'"'+doneAttribute+'><span>☕ '+label+': '+clock(t)+'–'+clock(t+duration)+' ('+duration+' min)</span></label>';
-  t+=duration;
-}
+valid.forEach(({v,i},index)=>{
+  const checked=(d.done||[]).includes(i);
+  rows+='<div class="task '+(checked?'done':'')+'"><input type="checkbox" data-check="'+i+'" '+(checked?'checked':'')+' aria-label="Completar '+esc(NAMES[i])+'">'+
+    '<span class="time">'+esc(creationLabel(creationStampForActivity(i)))+'</span>'+
+    '<div class="name">'+esc(NAMES[i])+'<small style="display:block;color:#a9bfdb">Duración prevista: '+fmt(v)+'</small></div>'+
+    '<input type="number" min="0" max="960" step="5" value="'+v+'" data-duration="'+i+'" aria-label="Minutos previstos de '+esc(NAMES[i])+'">'+
+    '<div class="task-actions"><button class="move-task" data-move="'+i+'" data-direction="-1" aria-label="Subir '+esc(NAMES[i])+'" title="Mover arriba" '+(index===0?'disabled':'')+'>↑</button>'+
+    '<button class="move-task" data-move="'+i+'" data-direction="1" aria-label="Bajar '+esc(NAMES[i])+'" title="Mover abajo" '+(index===valid.length-1?'disabled':'')+'>↓</button>'+
+    '<button class="remove-task" data-remove="'+i+'" aria-label="Quitar '+esc(NAMES[i])+' solo de este día" title="Ocultar solo en esta fecha">Quitar</button>'+
+    '<button class="rename-task" data-rename="'+i+'" aria-label="Renombrar '+esc(NAMES[i])+'" title="Cambiar el nombre en todas las fechas">✎ Renombrar</button>'+
+    '<button class="delete-task" data-delete-global="'+i+'" aria-label="Eliminar permanentemente '+esc(NAMES[i])+' de todas las fechas" title="Eliminar definitivamente de todas las fechas">🗑 Eliminar</button></div></div>';
+  for(const pause of breakAnchors.get(i)||[]){
+    const label=esc(pause.label),doneAttribute=pause.done?' checked':'';
+    const breakKey=pause.kind+':'+pause.breakIndex;
+    rows+='<label class="pause '+(pause.done?'break-done':'')+'"><input type="checkbox" data-break-complete="'+breakKey+'" aria-label="Marcar como completado el descanso '+label+'"'+doneAttribute+'>'+
+      '<span>☕ '+label+' · Duración prevista: '+fmt(pause.minutes)+
+      '<small style="display:block">'+esc(creationLabel(pause.createdAt))+'</small></span></label>';
+  }
 });
-if(!valid.length)rows='<p>'+(m==='project'?'Todavía no tienes actividades de proyecto. Agrégalas arriba; puedes repetirlas en todos tus días de proyecto.':'No hay actividades programadas. Puedes restaurarlas debajo o restablecer el día.')+'</p>';if(t<1260)rows+='<div class="pause">Tiempo sin asignar: '+clock(t)+'–21:00 ('+fmt(1260-t)+')</div>';el('tasks').innerHTML=rows;
+if(!valid.length){
+  rows='<p>'+(m==='project'?'Todavía no tienes actividades de proyecto. Agrégalas arriba; puedes repetirlas en todos tus días de proyecto.':'No hay actividades programadas. Puedes restaurarlas debajo o restablecer el día.')+'</p>';
+}
+if(valid.length)rows+='<p><small>Capacidad restante estimada según duraciones planificadas: '+(remain<0?'exceso de ':'')+fmt(remain)+'. Esto no equivale a tiempo efectivamente trabajado.</small></p>';
+el('tasks').innerHTML=rows;
 const hidden=dur.map((v,i)=>i).filter(i=>eligible(selected,i)&&removed(selected,i));el('removedTasks').innerHTML=hidden.length?'<h2>Actividades quitadas de este día</h2>'+hidden.map(i=>'<div class="removed-item"><span class="muted">'+esc(NAMES[i])+'</span><div class="task-actions"><button data-restore="'+i+'" aria-label="Restaurar '+esc(NAMES[i])+'">Restaurar</button><button class="rename-task" data-rename="'+i+'" aria-label="Renombrar '+esc(NAMES[i])+'">✎ Renombrar</button><button class="delete-task" data-delete-global="'+i+'" aria-label="Eliminar permanentemente '+esc(NAMES[i])+'">🗑 Eliminar</button></div></div>').join(''):'<p><small>Para quitar una actividad, pulsa «Quitar» junto a su nombre. Podrás restaurarla aquí.</small></p>';
 el('removedTasks').querySelectorAll('[data-restore]').forEach(x=>x.onclick=()=>restoreActivity(Number(x.dataset.restore)));
 el('tasks').querySelectorAll('[data-remove]').forEach(x=>x.onclick=()=>removeActivity(Number(x.dataset.remove)));
