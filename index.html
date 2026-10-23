@@ -32,12 +32,12 @@
 <section class="metrics"><div class="metric"><small>Actividades planeadas</small><b id="planned"></b></div><div class="metric"><small>Tiempo completado</small><b id="complete"></b></div><div class="metric"><small>Tiempo pendiente</small><b id="pending"></b></div><div class="metric"><small>Tiempo libre restante</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
-<label for="selectionMode">Seleccionar <select id="selectionMode"><option value="single">Un día (normal)</option><option value="multi">Varios días</option><option value="range">Intervalo (dos clics)</option></select></label>
+<label for="selectionMode">Seleccionar <select id="selectionMode"><option value="single">Un día (consultar y asignar)</option><option value="multi">Varios días</option><option value="range">Intervalo (dos clics)</option></select></label>
 <label for="selectedDayType">Definir como <select id="selectedDayType"><option value="undefined">No definido (limpiar días)</option><option value="free">Libre / estudio</option><option value="evaluation">Evaluación</option><option value="project">Día de proyecto</option><option value="travel">Viaje</option><option value="off">No disponible</option></select></label>
 <button id="applySelected" type="button" disabled>Aplicar a días seleccionados</button>
 <button id="clearSelected" type="button">Limpiar selección</button>
 </div>
-<p id="selectionStatus" class="selection-status" role="status" aria-live="polite">Selecciona las fechas y el estado que deseas aplicar.</p>
+<p id="selectionStatus" class="selection-status" role="status" aria-live="polite">Haz clic en una fecha para seleccionarla, incluso cuando solo quieras modificar un día.</p>
 </section>
 <div class="calendar" id="calendar"></div><h2>Distribución diaria</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>16 horas disponibles entre las 05:00 y las 21:00. El tiempo libre no se agenda automáticamente.</small></p></section>
 <section class="panel"><div class="row"><div><h2 id="selectedTitle"></h2><small id="selectedDate"></small></div><button id="reset">Restablecer día</button></div><div class="controls"><span id="dayStatus" class="day-status" aria-live="polite">Estado: No definido</span><label>Descansos (min) <input id="breaks" type="number" min="0" max="960" step="5"></label><button id="resetOrder" title="Dejar el orden original sin borrar actividades ni progreso">Restablecer orden</button></div><div class="summary" id="summary"></div><form id="addTaskForm" class="add-task">
@@ -210,15 +210,15 @@ function dateSpan(a,b){
 }
 function selectionStatus(){
   el('selectionMode').value=calendarSelectionMode;
-  el('applySelected').disabled=!isSelectionMode()||selectedDates.size===0;
+  el('applySelected').disabled=selectedDates.size===0;
   el('clearSelected').disabled=selectedDates.size===0&&!selectionAnchor;
   const count=selectedDates.size;
   let description=selectionFeedback;
   if(!description){
-    if(calendarSelectionMode==='single')description='Modo normal: elige una fecha para consultar sus actividades. Para cambiar su estado, selecciona «Varios días» o «Intervalo».';
-    else if(calendarSelectionMode==='range'&&awaitingEnd)description='Inicio: '+selectionAnchor+'. Ahora selecciona el día final, incluso en otro mes.';
-    else if(calendarSelectionMode==='range')description='Selecciona dos fechas en el calendario para marcar un intervalo inclusivo.';
-    else description='Haz clic en varios días para seleccionarlos. Mayús + clic selecciona un intervalo desde el último día.';
+    if(calendarSelectionMode==='single')description=count?'La fecha está lista para aplicar cualquiera de los seis estados; también puedes editar sus actividades.':'Haz clic en una fecha para abrir sus actividades y seleccionarla para cambiar su estado.';
+    else if(calendarSelectionMode==='range'&&awaitingEnd)description='Fecha seleccionada: '+selectionAnchor+'. Ya puedes aplicar un estado a ese día, o elegir una segunda fecha para completar el intervalo.';
+    else if(calendarSelectionMode==='range')description='Haz clic en una fecha para asignar solo ese día, o en dos fechas para definir un intervalo inclusivo.';
+    else description=count?'Puedes aplicar el estado a los días seleccionados o añadir más fechas. Mayús + clic también admite rangos.':'Haz clic en un día o en varios para seleccionarlos. Mayús + clic admite intervalos.';
   }
   el('selectionStatus').textContent=count+' día'+(count===1?'':'s')+' seleccionado'+(count===1?'':'s')+'. '+description;
   const clearDays=el('selectedDayType').value==='undefined';
@@ -232,8 +232,11 @@ function setCalendarSelectionMode(mode){
   drawCalendar();
 }
 function calendarDayClicked(event,s){
-  if(!isSelectionMode()){
-    selected=s;year=date(s).getFullYear();month=date(s).getMonth();render();return;
+  if(calendarSelectionMode==='single'){
+    selected=s;year=date(s).getFullYear();month=date(s).getMonth();
+    selectedDates.clear();selectedDates.add(s);
+    selectionAnchor=s;awaitingEnd=false;selectionFeedback='';
+    render();return;
   }
   selectionFeedback='';
   if(calendarSelectionMode==='range'){
@@ -257,7 +260,7 @@ function calendarDayClicked(event,s){
   drawCalendar();
 }
 function applyCalendarSelection(){
-  if(!isSelectionMode()||selectedDates.size===0)return;
+  if(selectedDates.size===0)return;
   const type=el('selectedDayType').value;
   const labels={undefined:'No definido',free:'Libre / estudio',evaluation:'Evaluación',project:'Día de proyecto',travel:'Viaje',off:'No disponible'};
   if(!Object.prototype.hasOwnProperty.call(labels,type))return;
@@ -302,8 +305,8 @@ function drawCalendar(){
     const d=new Date(year,month,1-offset+i),s=iso(d),m=state(s);
     const p=minutes(s)?Math.round(100*done(s)/minutes(s)):0;
     const label=m==='travel'?'Viaje':m==='off'?'No disponible':m==='undefined'?'No definido':m==='evaluation'?'Evaluación · '+p+'%':m==='project'?'Proyecto · '+p+'%':'Estudio · '+p+'%';
-    const picked=isSelectionMode()&&selectedDates.has(s);
-    out+='<button type="button" class="date '+m+(s===selected?' selected':'')+(s===today?' today':'')+(picked?' multi-picked':'')+'" data-day="'+s+'" '+(s===today?'aria-current="date" ':'')+(isSelectionMode()?'aria-pressed="'+picked+'" ':'')+'aria-label="'+s+' '+label+(picked?', seleccionado':'')+'"><b>'+d.getDate()+'</b><small>'+label+'</small><div class="progress"><i style="width:'+p+'%"></i></div></button>';
+    const picked=selectedDates.has(s);
+    out+='<button type="button" class="date '+m+(s===selected?' selected':'')+(s===today?' today':'')+(picked?' multi-picked':'')+'" data-day="'+s+'" '+(s===today?'aria-current="date" ':'')+'aria-pressed="'+picked+'" '+'aria-label="'+s+' '+label+(picked?', seleccionado':'')+'"><b>'+d.getDate()+'</b><small>'+label+'</small><div class="progress"><i style="width:'+p+'%"></i></div></button>';
   }
   el('calendar').innerHTML=out;
   el('calendar').querySelectorAll('[data-day]').forEach(b=>b.onclick=event=>calendarDayClicked(event,b.dataset.day));
@@ -425,6 +428,7 @@ function navigateToDate(day){
   if(!dateValid(day))return;
   selected=day;year=date(day).getFullYear();month=date(day).getMonth();
   setCalendarSelectionMode('single');
+  selectedDates.add(day);selectionAnchor=day;
   render();
 }
 function render(){drawCalendar();drawManager();drawDay();drawHistory()}
@@ -436,7 +440,7 @@ el('selectedDayType').onchange=()=>selectionStatus();
 el('resetOrder').onclick=resetOrder;
 el('addTaskForm').onsubmit=e=>{e.preventDefault();addActivity()};
 el('breaks').onchange=e=>{get(selected).breaks=Math.max(0,Math.min(960,Number(e.target.value)||0));save();render()};
-el('prev').onclick=()=>{month--;if(month<0){month=11;year--}drawCalendar()};el('next').onclick=()=>{month++;if(month>11){month=0;year++}drawCalendar()};el('today').onclick=()=>{selected=iso(new Date());year=date(selected).getFullYear();month=date(selected).getMonth();render()};
+el('prev').onclick=()=>{month--;if(month<0){month=11;year--}drawCalendar()};el('next').onclick=()=>{month++;if(month>11){month=0;year++}drawCalendar()};el('today').onclick=()=>{selected=iso(new Date());year=date(selected).getFullYear();month=date(selected).getMonth();if(calendarSelectionMode==='single'){selectedDates.clear();selectedDates.add(selected);selectionAnchor=selected;awaitingEnd=false;}render()};
 el('reset').onclick=()=>{if(confirm('¿Restablecer duración y progreso del día seleccionado?')){delete db.days[selected];save();render()}};
 
 el('showMorePeriods').onclick=()=>{visiblePeriodCount+=40;drawHistory()};
