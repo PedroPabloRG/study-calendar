@@ -66,7 +66,7 @@
     if (row === null) return null;
 
     const state = JSON.parse(row);
-    if (!state || typeof state !== 'object' || !state.days || typeof state.days !== 'object') {
+    if (!state || typeof state !== 'object') {
       throw new Error('Datos de calendario no válidos en SQLite.');
     }
     state.days = {};
