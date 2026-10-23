@@ -44,7 +44,7 @@ El reporte muestra:
 - **Fecha en grande**, día de la semana y tipo de día (estudio, evaluación, proyecto, viaje, no disponible o no definido).
 - **Actividades y descansos nuevos ordenados por su fecha y hora reales de creación**, registradas cuando se pulsa «Agregar»; se incluyen la duración prevista y el estado completado/pendiente.
 - **Actividades predefinidas y registros antiguos sin hora registrada** en un apartado independiente, sin atribuirles horas de inicio o fin inventadas.
-- **Resumen de progreso y capacidad estimada:** actividades completadas, porcentaje de progreso, descansos completados, duraciones previstas y capacidad diaria sin planificar.
+- **Resumen de progreso y capacidad contextual:** para hoy, tiempo real disponible hasta las 21:00 y carga pendiente; para fechas futuras, capacidad prevista; para fechas pasadas, avances registrados. Se mantienen las duraciones estimadas.
 - **Advertencia** si la suma de duraciones previstas excede la referencia diaria de 16 horas.
 
 Para cerrar, pulsa **«Cerrar reporte»** o utiliza **Esc**. En teléfonos y como alternativa accesible al triple clic, abre una fecha normalmente y pulsa **«Ver reporte del día»** en el panel de actividades.
@@ -68,6 +68,26 @@ El historial se guarda en el mismo SQLite local y en los respaldos JSON. **«Lim
 Después de asignar **Día de proyecto** desde la selección múltiple, abre una de esas fechas en modo normal y agrega actividades con las opciones **Solo este día** o **Todos los días de proyecto**. Las tareas recurrentes de proyecto se mostrarán en las demás fechas que marques con ese estado.
 
 Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
+
+## Carga diaria contextual (hora actual)
+
+La barra **«Carga diaria estimada»** interpreta la fecha seleccionada de tres maneras:
+
+| Fecha | Cálculo de la barra | Indicadores |
+| --- | --- | --- |
+| **Hoy** | Desde la **hora actual del navegador** hasta las **21:00** (antes de las 05:00 se usa la ventana completa 05:00–21:00). Compara las **duraciones pendientes** de las actividades y de los descansos contra ese tiempo restante. | Hora actual, minutos disponibles, carga pendiente, margen libre y posible exceso. |
+| **Fecha futura** | Referencia de **16 horas (05:00–21:00)**, con todas las actividades y pausas previstas. | Duraciones planificadas, capacidad sin asignar y excesos. |
+| **Fecha pasada** | No supone que quedaba tiempo libre. Muestra la proporción de **duraciones previstas marcadas como completadas**, separadas de lo pendiente. | Porcentaje histórico y tareas/descansos completados. |
+
+Los colores de la barra cambian de significado según la fecha: **azul** para actividades pendientes, planificadas o marcadas como completadas; **naranja** para descansos equivalentes; **verde** para capacidad aún sin asignar; y **gris** para duraciones que quedaron pendientes en fechas pasadas. El texto de la leyenda indica siempre qué representa cada segmento.
+
+**Ejemplo:** hoy a las **15:00** quedan **6 horas** de la ventana de referencia hasta las 21:00. Si tienes 4 h 30 min de actividades pendientes y 1 h 30 min de descansos pendientes, tu margen es de **0 horas**. Si pasan diez minutos sin registrar ninguna finalización, aparecerá un **exceso de 10 minutos**.
+
+- La hora se obtiene mediante el **reloj local del dispositivo** y el cálculo se refresca cada **30 segundos**, al volver a la pestaña o recuperar el foco. El refresco no guarda datos ni reinicia los campos que estés editando.
+- Marcar una actividad o descanso como completado reduce **su carga pendiente**, pero **no acredita** que se hayan trabajado esos minutos en tiempo real. Las duraciones son estimaciones.
+- Si la hora actual es posterior a las 21:00, la capacidad restante de hoy es **0**; cualquier tarea pendiente seguirá visible y se señalará como exceso.
+- El **reporte diario ampliado** utiliza el mismo criterio temporal para su indicador de capacidad. Las horas de creación de actividades y descansos siguen conservándose por separado.
+- La función no altera la clasificación de fechas, el historial, las actividades, el progreso ni la base de datos SQLite.
 
 ## Registro real de fecha y hora de creación
 
@@ -135,7 +155,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 ## Otras funciones
 
 - Selección automática de la fecha actual al abrir el calendario.
-- Duraciones previstas editables; registro real de creación de actividades y pausas, estados completados o pendientes, y capacidad diaria estimada.
+- Duraciones previstas editables; registro real de creación de actividades y pausas; capacidad estimada según la hora actual, la fecha seleccionada y los estados completados o pendientes.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
