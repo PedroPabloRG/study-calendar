@@ -18,9 +18,12 @@ Abre el archivo `index.html` en Chrome, Edge o Firefox. Selecciona fechas y marc
 - Calendario mensual y navegación entre fechas.
 - Modos estudio, evaluación, viaje y no disponible.
 - Tiempos editables y actividades completas/pendientes por día.
-- Priorización de las dos actividades universitarias.
+- Actividades universitarias visibles únicamente durante evaluaciones.
+- Creación de actividades personalizadas para un día, todos los días de estudio o evaluaciones.
+- Reordenamiento de actividades por día y opción de quitarlas y restaurarlas.
+- **Eliminación permanente:** abre «Administrar actividades · Eliminar permanentemente», selecciona la actividad y confirma. Se elimina del horario y del progreso de todas las fechas. También se aplica a actividades originales. Para ocultarla solo en una fecha utiliza «Quitar».
 - Evaluaciones por rango de fechas.
 - Visualización del tiempo ocupado, descansos y tiempo restante.
 - Exportación e importación de respaldos JSON.
 
-**Aviso:** Los datos se guardan en el navegador local y no se sincronizan con GitHub ni con otros equipos. Exporta copias de seguridad periódicamente.
+**Aviso:** Los datos se guardan en el navegador local y no se sincronizan con GitHub ni con otros equipos. Exporta copias de seguridad periódicamente. Una actividad eliminada permanentemente no se recupera desde la página ni al restablecer un día. Importar un respaldo anterior puede recuperar datos borrados, porque reemplaza el almacenamiento local.
