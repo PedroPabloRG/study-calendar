@@ -31,6 +31,19 @@
 .period-stat .count-label{color:#bccce3;font-size:12px}
 @media(max-width:530px){.period-entry{align-items:flex-start}.period-entry button{width:100%}}.manager-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.removed-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #263751}.removed-item button{background:#234637;border-color:#4b9072}.removed-item button.delete-task{background:#732637;color:white;border-color:#c25e71}.muted{color:#aebed4}.time{font-variant-numeric:tabular-nums;color:#b7c9e6;font-size:12px;overflow-wrap:anywhere}
 .recorded-note{border-left:3px solid #60b7b1;background:#1c3643;padding:10px 12px;border-radius:8px;margin:12px 0;color:#d8f5ee;font-size:13px}
+.task-time-panel{margin:0 0 12px 24px;padding:11px 14px;background:#1b3048;border:1px solid #385676;border-radius:11px}
+.task-time-panel summary{cursor:pointer;color:#bbdefe;font-weight:650;list-style-position:inside}
+.task-time-panel .time-controls{padding-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.task-time-panel .time-field{min-width:0;display:flex;flex-direction:column;gap:7px;color:#d9eaff;font-size:13px}
+.task-time-panel input[type=range]{width:100%;accent-color:#75adf4;cursor:ew-resize;min-height:24px}
+.task-time-panel output{color:#b8ffd9;font-weight:650;overflow-wrap:anywhere}
+.task-time-panel .time-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:9px}
+.task-time-panel .time-actions button{background:#284766;border-color:#4a759d}
+.task-time-panel .time-actions .finish-now{background:#236047;border-color:#46936d}
+.task-time-panel .time-actions button:disabled{opacity:.45;cursor:not-allowed}
+.task-time-panel .time-note{grid-column:1/-1;color:#b2c9e5;font-size:12px}
+.task-time-panel .time-span{grid-column:1/-1;color:#c9f2db;font-size:13px;font-weight:650}
+@media(max-width:580px){.task-time-panel{margin-left:0}.task-time-panel .time-controls{grid-template-columns:1fr}}
 .pause small{font-size:11px;color:#ddcaab}
 @media(max-width:580px){.task{grid-template-columns:24px minmax(0,1fr) 84px}.task .time{grid-column:2/-1}.task .name{grid-column:2}.task input[type=number]{grid-column:3}.task .task-actions{grid-column:1/-1}}.pause{margin:8px 0;padding:9px 12px;background:#333343;border-left:3px solid #e0b476;border-radius:6px;font-size:12px}
 .break-planner{border:1px solid #3c5472;border-radius:13px;background:#1a2940;padding:14px;margin:16px 0}
@@ -219,6 +232,119 @@ function visibleTasks(s){const dur=durations(s);return orderFor(s).map(i=>({v:Nu
 function moveActivity(i,direction){const visible=visibleTasks(selected).map(o=>o.i),position=visible.indexOf(i),neighbor=visible[position+direction];if(position<0||neighbor===undefined)return;const d=get(selected),ordered=orderFor(selected),a=ordered.indexOf(i),b=ordered.indexOf(neighbor);[ordered[a],ordered[b]]=[ordered[b],ordered[a]];d.order=ordered;save();render();const moved=el('tasks').querySelector('[data-move="'+i+'"][data-direction="'+direction+'"]')||el('tasks').querySelector('[data-move="'+i+'"]');if(moved)moved.focus()}
 function resetOrder(){get(selected).order=NAMES.map((_,i)=>i).filter(i=>!globallyDeleted(i));save();render()}
 function minutes(s){return active(s)?visibleTasks(s).reduce((a,o)=>a+o.v,0):0}
+
+// Each date has its own clock data even for activities repeated across many days.
+function activityTiming(s,i){
+  const day=db.days?.[s];
+  const result=day?.activityTimes?.[String(i)];
+  return result&&typeof result==='object'?result:{};
+}
+function timeStampLabel(value,source){
+  if(!validCreationStamp(value))return 'Sin registrar';
+  const when=new Date(value);
+  return pad(when.getHours())+':'+pad(when.getMinutes())+
+    (source==='clock'?' (reloj real)':source==='manual'?' (ajuste manual)':' (registrada)');
+}
+function timeStampFull(value,source){
+  if(!validCreationStamp(value))return 'No registrada';
+  return new Date(value).toLocaleString('es-MX',{
+    day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
+  })+(source==='manual'?' · ajuste manual':source==='clock'?' · reloj real':'');
+}
+function timeSliderPosition(value,s){
+  if(validCreationStamp(value)){
+    const d=new Date(value);return d.getHours()*60+d.getMinutes();
+  }
+  const now=new Date();return iso(now)===s?now.getHours()*60+now.getMinutes():12*60;
+}
+function sliderClock(minutes){
+  const number=Math.max(0,Math.min(1439,Math.round(Number(minutes)||0)));
+  return pad(Math.floor(number/60))+':'+pad(number%60);
+}
+function manualActivityTimestamp(s,minuteValue){
+  const value=Number(minuteValue);
+  if(!Number.isInteger(value)||value<0||value>1439)return null;
+  const y=Number(s.slice(0,4)),m=Number(s.slice(5,7))-1,d=Number(s.slice(8,10));
+  const created=new Date(y,m,d,Math.floor(value/60),value%60,0,0);
+  // Reject nonexistent local wall-clock values (e.g. some DST transitions).
+  if(iso(created)!==s||created.getHours()!==Math.floor(value/60)||created.getMinutes()!==value%60)return null;
+  return created.toISOString();
+}
+function saveActivityTimestamp(i,kind,stamp,source){
+  if(!visibleTasks(selected).some(t=>t.i===i)||!['start','finish'].includes(kind)||
+    !['manual','clock'].includes(source)||!validCreationStamp(stamp))return false;
+  const d=get(selected);
+  if(!d.activityTimes||typeof d.activityTimes!=='object')d.activityTimes={};
+  const entry=activityTiming(selected,i);
+  const other=kind==='start'?entry.finishedAt:entry.startedAt;
+  if(validCreationStamp(other)&&
+    (kind==='start'?Date.parse(stamp)>Date.parse(other):Date.parse(stamp)<Date.parse(other))){
+    alert(kind==='start'?'La hora de inicio no puede ser posterior a la de finalización.':'La hora de finalización no puede ser anterior al inicio.');
+    return false;
+  }
+  const result={...entry};
+  if(kind==='start'){result.startedAt=stamp;result.startSource=source}
+  else {
+    result.finishedAt=stamp;result.finishSource=source;
+    if(!Array.isArray(d.done))d.done=[];
+    if(!d.done.includes(i))d.done.push(i);
+  }
+  d.activityTimes[String(i)]=result;
+  save();render();
+  return true;
+}
+function setActivityNow(i,kind){
+  const now=new Date();
+  if(selected!==iso(now)){
+    alert('Los botones «Ahora» solo registran la hora real cuando está seleccionado el día de hoy. Para otra fecha, mueve el deslizador (se indicará que es un ajuste manual).');
+    return false;
+  }
+  return saveActivityTimestamp(i,kind,now.toISOString(),'clock');
+}
+function setActivityTimeFromSlider(i,kind,minutesValue){
+  const timestamp=manualActivityTimestamp(selected,minutesValue);
+  if(!timestamp){alert('La hora elegida no es válida para esta fecha.');render();return}
+  if(!saveActivityTimestamp(i,kind,timestamp,'manual'))render();
+}
+function clearActivityTime(i){
+  const d=get(selected);
+  if(!d.activityTimes||!Object.prototype.hasOwnProperty.call(d.activityTimes,String(i)))return;
+  delete d.activityTimes[String(i)];
+  // Clearing clock annotations does not silently erase completion/progress.
+  save();render();
+}
+function activityTrackedSpan(s,i){
+  const times=activityTiming(s,i);
+  if(!validCreationStamp(times.startedAt)||!validCreationStamp(times.finishedAt))return '';
+  const elapsed=Math.round((Date.parse(times.finishedAt)-Date.parse(times.startedAt))/60000);
+  if(!Number.isFinite(elapsed)||elapsed<0)return '';
+  const sources=times.startSource==='clock'&&times.finishSource==='clock'
+    ?'Tiempo entre marcas del reloj':'Intervalo con ajustes manuales';
+  return sources+': '+fmt(elapsed);
+}
+function activityTimePanel(s,i){
+  const stamp=activityTiming(s,i),startValid=validCreationStamp(stamp.startedAt),
+    finishValid=validCreationStamp(stamp.finishedAt),isToday=s===iso(new Date());
+  const label=startValid||finishValid
+    ?'Inicio: '+(startValid?timeStampLabel(stamp.startedAt,stamp.startSource):'sin registrar')+
+      ' · Finalización: '+(finishValid?timeStampLabel(stamp.finishedAt,stamp.finishSource):'sin registrar')
+    :'Sin horas registradas';
+  return '<details class="task-time-panel" data-time-panel="'+i+'">'+
+    '<summary>⏱ Registro de tiempo · '+esc(label)+'</summary>'+
+    '<div class="time-controls">'+
+      '<label class="time-field">Desliza la hora de inicio'+
+      '<input type="range" min="0" max="1439" step="1" value="'+timeSliderPosition(stamp.startedAt,s)+'" data-time-start="'+i+'" aria-label="Hora de inicio manual de '+esc(NAMES[i])+'">'+
+      '<output data-time-preview-start="'+i+'">'+(startValid?esc(timeStampLabel(stamp.startedAt,stamp.startSource)):'Sin registrar · arrastra para elegir')+'</output></label>'+
+      '<label class="time-field">Desliza la hora de finalización'+
+      '<input type="range" min="0" max="1439" step="1" value="'+timeSliderPosition(stamp.finishedAt,s)+'" data-time-finish="'+i+'" aria-label="Hora de finalización manual de '+esc(NAMES[i])+'">'+
+      '<output data-time-preview-finish="'+i+'">'+(finishValid?esc(timeStampLabel(stamp.finishedAt,stamp.finishSource)):'Sin registrar · arrastra para elegir')+'</output></label>'+
+      '<div class="time-actions"><button type="button" data-time-now-start="'+i+'" '+(!isToday?'disabled title="Solo para el día actual"':'')+'>▶ Iniciar ahora</button>'+
+      '<button type="button" class="finish-now" data-time-now-finish="'+i+'" '+(!isToday?'disabled title="Solo para el día actual"':'')+'>✓ Finalizar ahora</button>'+
+      '<button type="button" data-time-clear="'+i+'">Limpiar horas</button></div>'+
+      (activityTrackedSpan(s,i)?'<div class="time-span">'+esc(activityTrackedSpan(s,i))+'</div>':'')+
+      '<p class="time-note">Al soltar el deslizador, la hora elegida se guarda como ajuste manual. Los botones «Ahora» utilizan el reloj del dispositivo y están disponibles solo para hoy. Finalizar marca la actividad como completada; las horas guardadas son independientes de su duración prevista.</p>'+
+    '</div></details>';
+}
 
 // Reference window 05:00–21:00. Completion is user-reported, not elapsed time.
 const DAY_START_MINUTES=5*60,DAY_END_MINUTES=21*60,REFERENCE_MINUTES=DAY_END_MINUTES-DAY_START_MINUTES;
