@@ -53,6 +53,25 @@ Después de asignar **Día de proyecto** desde la selección múltiple, abre una
 
 Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
 
+## Formulario de descansos y comidas
+
+En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proyecto**, el panel de actividades incluye el formulario **«Descansos y comidas»**.
+
+1. En **«Descansar después de»**, elige una actividad programada para ese día.
+2. Escribe un **nombre**, por ejemplo «Desayuno», «Comida», «Caminar» o «Descanso».
+3. Indica una **duración en minutos** (de 5 a 960, en múltiplos de 5) y pulsa **«Agregar descanso»**. Se puede repetir para programar varias pausas, incluso después de la misma actividad.
+4. En la lista de descansos puedes editar el **nombre**, la **actividad después de la que ocurre** y la **duración**, o pulsar **«Eliminar pausa»**.
+5. Al hacer cambios, las pausas aparecen en el horario con horas de inicio y fin. Se recalculan el total de descansos y el tiempo libre. Si las actividades y pausas superan las 16 horas disponibles, aparece una advertencia.
+
+### Compatibilidad y recuperación de los descansos anteriores
+
+- Los días existentes mantienen sus **90 minutos de descanso automático**, repartidos entre actividades. El total automático se puede modificar desde el mismo panel.
+- **Al agregar el primer descanso personalizado**, ese día utiliza solamente los descansos que definas: ya no se suman automáticamente los 90 minutos anteriores.
+- **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
+- Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
+- En días **No definido**, **Viaje** o **No disponible** no se programan descansos.
+- Cada fecha guarda sus propios descansos en el registro `calendar_days` del SQLite local y en el respaldo JSON. Los horarios anteriores se migran sin necesidad de modificar sus datos originales.
+
 ## Persistencia SQLite (local al navegador)
 
 Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. El archivo binario de la base de datos SQLite se guarda en **IndexedDB del navegador**, sin necesidad de un servidor de aplicaciones.
@@ -60,7 +79,7 @@ Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. E
 - `sqlite-storage.js`: carga SQLite, crea las tablas, migra los datos antiguos y almacena el fichero binario.
 - `index.html`: calendario y gestión de días, tareas, intervalos y respaldos.
 - Al iniciar, se migran automáticamente los datos anteriores de `localStorage` a SQLite cuando la base todavía está vacía. Una copia JSON en `localStorage` continúa como mecanismo de recuperación si SQLite o IndexedDB fallan.
-- Los cambios se guardan en SQLite y en un espejo JSON local, conservando las fechas, tareas completadas, tiempos, catálogos, periodos resumidos e historial de asignaciones.
+- Los cambios se guardan en SQLite y en un espejo JSON local, conservando las fechas, tareas completadas, tiempos, descansos personalizados por fecha, catálogos, periodos resumidos e historial de asignaciones.
 - El indicador superior informa si **SQLite está activo** o si la aplicación está operando sin él.
 - Si sql.js o WebAssembly no se pueden cargar, la aplicación sigue disponible con persistencia JSON local y una advertencia visible, pero **no** está utilizando SQLite.
 
@@ -69,7 +88,7 @@ Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. E
 | Tabla | Contenido |
 | --- | --- |
 | `calendar_meta` | Configuración global, historial de asignaciones de fechas, nombres y ajustes anteriores conservados por compatibilidad (JSON por clave). |
-| `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas y orden. |
+| `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas, orden y descansos personalizados. |
 | `calendar_activities` | Un registro por índice de actividad personalizada, incluida la marca para elementos eliminados. |
 
 Se escriben las tablas de forma transaccional. El archivo SQLite completo se serializa y se conserva en IndexedDB.
@@ -86,7 +105,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 ## Otras funciones
 
 - Selección automática de la fecha actual al abrir el calendario.
-- Duraciones editables; actividades completadas y pendientes, horarios y tiempo disponible.
+- Duraciones editables; actividades completadas y pendientes, horarios, descansos configurables y tiempo disponible.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
