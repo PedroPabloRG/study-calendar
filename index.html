@@ -289,6 +289,7 @@ function activityTrackedSpan(s,i,now=new Date()){
   if(!started)return closed?'Completada sin inicio medible':'Sin inicio registrado';
   const elapsed=activityElapsed(s,i,now);
   if(elapsed===null)return 'Horas incompatibles; intervalo no calculable';
+  if(finished&&!closed)return 'Finalización histórica conservada; actividad actualmente pendiente';
   if(finished){
     const prefix=autoClockSource(entry.startSource)&&entry.finishSource==='clock'
       ?'Tiempo transcurrido entre creación/inicio y finalización'
@@ -323,11 +324,11 @@ function recordedSnapshot(s,now=new Date()){
     if(done&&!hasEnd)incompleteEndCount++;
     const elapsed=activityElapsed(s,task.i,now);
     if(elapsed===null)continue;
-    if(hasEnd&&autoClockSource(t.startSource)&&t.finishSource==='clock'){
+    if(hasEnd&&done&&autoClockSource(t.startSource)&&t.finishSource==='clock'){
       completedMs+=elapsed;measuredCount++;
-    }else if(hasEnd){
+    }else if(hasEnd&&done){
       manualMs+=elapsed;manualCount++;
-    }else if(hasStart&&!done&&autoClockSource(t.startSource)){
+    }else if(hasStart&&!done&&!hasEnd&&autoClockSource(t.startSource)){
       runningMs+=elapsed;runningCount++;
     }
   }
