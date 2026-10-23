@@ -31,7 +31,19 @@ Todas las fechas sin asignación explícita se muestran como **No definido**. Lo
 4. Pulsa **Aplicar a días seleccionados** y confirma. Los cambios se guardan en SQLite local y en el respaldo JSON.
 5. **Limpiar selección** únicamente desmarca los días resaltados. Para cambiar su estado a **No definido**, usa esa opción del selector y después pulsa el botón de aplicar.
 
-El modo **Un día (normal)** sigue sirviendo para abrir una fecha y consultar o gestionar sus actividades. La sección separada de clasificación por intervalos y el botón individual de proyecto se retiraron por ser redundantes. **Periodos de planificación** sigue permitiendo modificar el inicio y el fin del periodo activo y recuperar periodos anteriores; no cambia los tipos de día.
+El modo **Un día (normal)** sigue sirviendo para abrir una fecha y consultar o gestionar sus actividades. La sección separada de clasificación por intervalos y el botón individual de proyecto se retiraron por ser redundantes.
+
+### Resumen de periodos e historial de fechas
+
+La sección antigua **«Periodos de planificación»** fue reemplazada por tres vistas que se generan automáticamente:
+
+- **Resumen de periodos y fechas:** cantidad de días clasificados en cada tipo (incluidos los días devueltos intencionalmente a «No definido»), número de periodos consecutivos y progreso acumulado visible.
+- **Periodos clasificados:** grupos de fechas consecutivas que actualmente tienen el mismo estado; muestra inicio, fin, número de días, tiempo programado y completado. El botón **«Ver fecha»** abre una de sus fechas.
+- **Historial de selecciones aplicadas:** cada confirmación de la selección múltiple registra la fecha/hora de la operación, el estado aplicado, las fechas exactas seleccionadas, las que cambiaron, y el estado anterior y nuevo de cada fecha. Permite revisar cambios aunque más adelante vuelvas a clasificar los mismos días.
+
+**Importante:** los días ya clasificados antes de esta función aparecen en el resumen actual, pero no se inventan fechas de modificaciones anteriores: el historial de operaciones comienza a registrarse con las nuevas selecciones. Las fechas y la configuración de antiguos periodos permanecen en los datos guardados por compatibilidad con respaldos anteriores, aunque ya no existe el formulario de periodos activos ni limita visualmente las fechas del calendario.
+
+El historial se guarda en el mismo SQLite local y en los respaldos JSON. **«Limpiar selección»** no modifica ni añade registros al historial; únicamente se registran operaciones confirmadas que produzcan cambios reales.
 
 ### Días de proyecto y conservación del historial
 
@@ -46,7 +58,7 @@ Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. E
 - `sqlite-storage.js`: carga SQLite, crea las tablas, migra los datos antiguos y almacena el fichero binario.
 - `index.html`: calendario y gestión de días, tareas, intervalos y respaldos.
 - Al iniciar, se migran automáticamente los datos anteriores de `localStorage` a SQLite cuando la base todavía está vacía. Una copia JSON en `localStorage` continúa como mecanismo de recuperación si SQLite o IndexedDB fallan.
-- Los cambios se guardan en SQLite y en un espejo JSON local, conservando las fechas, tareas completadas, tiempos, catálogos y periodos anteriores.
+- Los cambios se guardan en SQLite y en un espejo JSON local, conservando las fechas, tareas completadas, tiempos, catálogos, periodos resumidos e historial de asignaciones.
 - El indicador superior informa si **SQLite está activo** o si la aplicación está operando sin él.
 - Si sql.js o WebAssembly no se pueden cargar, la aplicación sigue disponible con persistencia JSON local y una advertencia visible, pero **no** está utilizando SQLite.
 
@@ -54,7 +66,7 @@ Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. E
 
 | Tabla | Contenido |
 | --- | --- |
-| `calendar_meta` | Configuración global, periodo activo, historial, nombres y otros ajustes (JSON por clave). |
+| `calendar_meta` | Configuración global, historial de asignaciones de fechas, nombres y ajustes anteriores conservados por compatibilidad (JSON por clave). |
 | `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas y orden. |
 | `calendar_activities` | Un registro por índice de actividad personalizada, incluida la marca para elementos eliminados. |
 
@@ -76,7 +88,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
-- Guardar un nuevo periodo sin borrar los registros de otros periodos; limpiar los campos de fecha sin eliminar los datos; recuperar intervalos anteriores.
+- Consultar periodos consecutivos calculados desde las fechas clasificadas, su progreso y el historial de cambios de estado por selección múltiple.
 - Respaldo periódico del calendario completo.
 
 ## Dependencia
