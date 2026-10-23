@@ -35,6 +35,22 @@ Los tres modos admiten trabajar con una sola fecha:
 
 La selección activa se destaca visualmente en el calendario. Las actividades del día, las duraciones y el progreso se conservan al cambiar su clasificación. Los cambios confirmados quedan registrados en el historial de selecciones.
 
+### Reporte diario ampliado (tres clics)
+
+Haz **tres clics seguidos sobre una misma fecha del calendario** para abrir un reporte en una ventana grande. La detección es propia del calendario y funciona incluso cuando las casillas se actualizan entre los clics. Está disponible en los tres modos de selección, sin reemplazar su funcionamiento habitual.
+
+El reporte muestra:
+
+- **Fecha en grande**, día de la semana y tipo de día (estudio, evaluación, proyecto, viaje, no disponible o no definido).
+- **Actividades en orden cronológico**, horas de inicio y fin, duración y estado completado/pendiente.
+- **Descansos automáticos o personalizados** intercalados en el horario, con su duración y estado de completado.
+- **Resumen de progreso:** actividades completadas, porcentaje de estudio, descansos completados, tiempo de actividades, tiempo de descansos y tiempo libre restante.
+- **Advertencia** si el horario supera las 16 horas disponibles (05:00–21:00).
+
+Para cerrar, pulsa **«Cerrar reporte»** o utiliza **Esc**. En teléfonos y como alternativa accesible al triple clic, abre una fecha normalmente y pulsa **«Ver reporte del día»** en el panel de actividades.
+
+**La vista es de consulta:** abrirla no modifica ninguna actividad, descanso, selección guardada ni registro de SQLite.
+
 ### Resumen de periodos e historial de fechas
 
 La sección antigua **«Periodos de planificación»** fue reemplazada por tres vistas que se generan automáticamente:
