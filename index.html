@@ -18,13 +18,13 @@
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small id="activePeriodShort">Periodo activo guardado</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
 <label for="selectionMode">Seleccionar <select id="selectionMode"><option value="single">Un día (normal)</option><option value="multi">Varios días</option><option value="range">Intervalo (dos clics)</option></select></label>
-<label for="selectedDayType">Definir como <select id="selectedDayType"><option value="travel">Viaje</option><option value="off">No disponible</option></select></label>
+<label for="selectedDayType">Definir como <select id="selectedDayType"><option value="travel">Viaje</option><option value="off">No disponible</option><option value="undefined">No definido (limpiar días)</option></select></label>
 <button id="applySelected" type="button" disabled>Aplicar a días seleccionados</button>
 <button id="clearSelected" type="button">Limpiar selección</button>
 </div>
-<p id="selectionStatus" class="selection-status" role="status" aria-live="polite">Para marcar viajes o días no disponibles, elige «Varios días» o «Intervalo» y selecciona fechas.</p>
+<p id="selectionStatus" class="selection-status" role="status" aria-live="polite">Selecciona varios días o un intervalo. Para quitar la clasificación de los días, elige «No definido (limpiar días)» y aplica el cambio. «Limpiar selección» solo desmarca fechas.</p>
 </section>
-<div class="calendar" id="calendar"></div><p><small>En «Varios días», haz clic en fechas independientes o utiliza Mayús + clic para un rango. En «Intervalo», selecciona el inicio y el fin con dos clics (también funciona en móviles). Se pueden seleccionar fechas de distintos meses. En modo normal, un clic abre el día. Los días sin asignar permanecen «No definido».</small></p><h2>Distribución diaria</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>16 horas disponibles entre las 05:00 y las 21:00. El tiempo libre no se agenda automáticamente.</small></p></section>
+<div class="calendar" id="calendar"></div><p><small>En «Varios días», haz clic en fechas independientes o utiliza Mayús + clic para un rango. En «Intervalo», selecciona el inicio y el fin con dos clics (también funciona en móviles). Puedes elegir «Viaje», «No disponible» o «No definido (limpiar días)». «Limpiar selección» desmarca las fechas sin cambiar su estado. Los datos de actividades se conservan.</small></p><h2>Distribución diaria</h2><div id="bar" class="bar"></div><div id="warning"></div><p><small>16 horas disponibles entre las 05:00 y las 21:00. El tiempo libre no se agenda automáticamente.</small></p></section>
 <section class="panel"><div class="row"><div><h2 id="selectedTitle"></h2><small id="selectedDate"></small></div><button id="reset">Restablecer día</button></div><div class="controls"><label>Tipo de día <select id="mode"><option value="undefined">No definido</option><option value="free">Libre / estudio</option><option value="evaluation">Evaluación</option><option value="travel">Viaje</option><option value="off">No disponible</option></select></label><label>Descansos (min) <input id="breaks" type="number" min="0" max="960" step="5"></label><button id="resetOrder" title="Dejar el orden original sin borrar actividades ni progreso">Restablecer orden</button></div><p><small>Usa ↑ y ↓ para cambiar la posición de cada actividad. El horario se ajustará automáticamente; el orden se guarda por día.</small></p><div class="summary" id="summary"></div><form id="addTaskForm" class="add-task">
 <label>Nombre de la nueva actividad<input id="newTaskName" type="text" maxlength="80" placeholder="Ej. Lectura de un libro" required></label>
 <label>Duración (minutos)<input id="newTaskMinutes" type="number" min="5" max="960" step="5" value="30" required></label>
@@ -193,7 +193,10 @@ function selectionStatus(){
     else description='Haz clic en varios días para seleccionarlos. Mayús + clic selecciona un intervalo desde el último día.';
   }
   el('selectionStatus').textContent=count+' día'+(count===1?'':'s')+' seleccionado'+(count===1?'':'s')+'. '+description;
-  el('applySelected').textContent=count?'Aplicar a '+count+' día'+(count===1?'':'s'):'Aplicar a días seleccionados';
+  const clearDays=el('selectedDayType').value==='undefined';
+  el('applySelected').textContent=clearDays
+    ?(count?'Dejar '+count+' día'+(count===1?'':'s')+' como «No definido»':'Dejar días como «No definido»')
+    :(count?'Aplicar a '+count+' día'+(count===1?'':'s'):'Aplicar a días seleccionados');
 }
 function setCalendarSelectionMode(mode){
   if(!['single','multi','range'].includes(mode))return;
@@ -228,17 +231,25 @@ function calendarDayClicked(event,s){
 function applyCalendarSelection(){
   if(!isSelectionMode()||selectedDates.size===0)return;
   const type=el('selectedDayType').value;
-  if(type!=='travel'&&type!=='off')return;
+  if(!['travel','off','undefined'].includes(type))return;
   const dates=[...selectedDates].sort();
   const changed=dates.filter(s=>state(s)!==type);
   const overriding=changed.filter(s=>state(s)==='free'||state(s)==='evaluation');
-  const noun=type==='travel'?'Viaje':'No disponible';
-  const warning=overriding.length?' Atención: '+overriding.length+' fecha(s) tienen estudio o evaluación; sus registros se conservarán, pero quedarán ocultos mientras tengan este tipo.':'';
-  if(changed.length&&!confirm('¿Marcar '+changed.length+' fecha(s) como «'+noun+'»?'+warning))return;
+  const noun=type==='travel'?'Viaje':type==='off'?'No disponible':'No definido';
+  const clearing=type==='undefined';
+  const warning=clearing
+    ?' Las actividades, sus duraciones y el progreso guardado de esos días se conservarán.'
+    :overriding.length?' Atención: '+overriding.length+' fecha(s) tienen estudio o evaluación; sus registros se conservarán, pero quedarán ocultos mientras tengan este tipo.':'';
+  const confirmation=clearing
+    ?'¿Dejar '+changed.length+' fecha(s) como «No definido» (quitarles el tipo de día)?'
+    :'¿Marcar '+changed.length+' fecha(s) como «'+noun+'»?';
+  if(changed.length&&!confirm(confirmation+warning))return;
   changed.forEach(s=>modeChange(s,type));
   if(changed.length)save();
   selectedDates.clear();selectionAnchor=null;awaitingEnd=false;
-  selectionFeedback=changed.length?changed.length+' fecha(s) guardada(s) como «'+noun+'». Puedes seleccionar otro grupo.':'Todas las fechas ya tenían este tipo. No se cambió ningún registro.';
+  selectionFeedback=changed.length
+    ?changed.length+(clearing?' fecha(s) restablecida(s) como «No definido».':' fecha(s) guardada(s) como «'+noun+'».')+' Puedes seleccionar otro grupo.'
+    :'Todas las fechas ya estaban como «'+noun+'». No se cambió ningún registro.';
   const currentMonthDates=dates.filter(s=>date(s).getFullYear()===year&&date(s).getMonth()===month);
   selected=currentMonthDates.length?currentMonthDates[currentMonthDates.length-1]:dates[0];
   if(!currentMonthDates.length){year=date(selected).getFullYear();month=date(selected).getMonth()}
