@@ -1,6 +1,6 @@
 # Calendario interactivo de estudios
 
-Calendario web estático en español, pensado para **GitHub Pages**, con seguimiento de actividades, descansos, tipos de día, periodos y evaluaciones. Usa una referencia de **16 horas de capacidad diaria** solo para sumar duraciones previstas: no fabrica horarios reales de ejecución.
+Calendario web estático en español, pensado para **GitHub Pages**, con gestión de actividades, descansos, tipos de día e historial. Mide automáticamente el tiempo transcurrido entre la creación de una actividad nueva para hoy y su finalización al marcarla como completada.
 
 ## Abrir la aplicación
 
@@ -44,8 +44,8 @@ El reporte muestra:
 - **Fecha en grande**, día de la semana y tipo de día (estudio, evaluación, proyecto, viaje, no disponible o no definido).
 - **Actividades y descansos nuevos ordenados por su fecha y hora reales de creación**, registradas cuando se pulsa «Agregar»; se incluyen la duración prevista y el estado completado/pendiente.
 - **Actividades predefinidas y registros antiguos sin hora registrada** en un apartado independiente, sin atribuirles horas de inicio o fin inventadas.
-- **Resumen de progreso y capacidad contextual:** para hoy, tiempo real disponible hasta las 21:00 y carga pendiente; para fechas futuras, capacidad prevista; para fechas pasadas, avances registrados. Se mantienen las duraciones estimadas.
-- **Advertencia** si la suma de duraciones previstas excede la referencia diaria de 16 horas.
+- **Resumen basado en los registros:** tiempo transcurrido entre creación y completado, tiempo en curso actualizado automáticamente, tareas completadas y tareas sin inicio registrado.
+- Las duraciones previstas se muestran aparte de las horas efectivamente registradas; no se genera un horario hipotético.
 
 Para cerrar, pulsa **«Cerrar reporte»** o utiliza **Esc**. En teléfonos y como alternativa accesible al triple clic, abre una fecha normalmente y pulsa **«Ver reporte del día»** en el panel de actividades.
 
@@ -69,25 +69,22 @@ Después de asignar **Día de proyecto** desde la selección múltiple, abre una
 
 Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
 
-## Carga diaria contextual (hora actual)
+## Resumen de tiempo medido automáticamente
 
-La barra **«Carga diaria estimada»** interpreta la fecha seleccionada de tres maneras:
+Se **retiró la barra gráfica «Carga diaria estimada»** y también los deslizadores manuales de inicio y finalización. En su lugar, la sección **«Registro automático de tiempo»** calcula sus indicadores a partir de los registros realmente guardados:
 
-| Fecha | Cálculo de la barra | Indicadores |
-| --- | --- | --- |
-| **Hoy** | Desde la **hora actual del navegador** hasta las **21:00** (antes de las 05:00 se usa la ventana completa 05:00–21:00). Compara las **duraciones pendientes** de las actividades y de los descansos contra ese tiempo restante. | Hora actual, minutos disponibles, carga pendiente, margen libre y posible exceso. |
-| **Fecha futura** | Referencia de **16 horas (05:00–21:00)**, con todas las actividades y pausas previstas. | Duraciones planificadas, capacidad sin asignar y excesos. |
-| **Fecha pasada** | No supone que quedaba tiempo libre. Muestra la proporción de **duraciones previstas marcadas como completadas**, separadas de lo pendiente. | Porcentaje histórico y tareas/descansos completados. |
+| Indicador | Cómo se calcula |
+| --- | --- |
+| **Tiempo registrado al completar** | Suma de los intervalos con hora de inicio automático y finalización registrada por el reloj, después de marcar la tarea como completada. |
+| **Tiempo en curso** | Tiempo transcurrido desde el inicio automático de las actividades abiertas que aún no están completas. |
+| **Actividades completadas** | Cantidad de casillas marcadas como completadas respecto al total visible de esa fecha. |
+| **Sin inicio registrado** | Actividades anteriores o recurrentes sin una hora inicial válida para esa fecha. |
 
-Los colores de la barra cambian de significado según la fecha: **azul** para actividades pendientes, planificadas o marcadas como completadas; **naranja** para descansos equivalentes; **verde** para capacidad aún sin asignar; y **gris** para duraciones que quedaron pendientes en fechas pasadas. El texto de la leyenda indica siempre qué representa cada segmento.
+La interfaz actualiza el tiempo en curso **cada segundo**, sin sobrescribir los formularios que estés editando ni guardar cambios nuevos mientras únicamente corre el reloj. El reporte diario ampliado utiliza los mismos registros.
 
-**Ejemplo:** hoy a las **15:00** quedan **6 horas** de la ventana de referencia hasta las 21:00. Si tienes 4 h 30 min de actividades pendientes y 1 h 30 min de descansos pendientes, tu margen es de **0 horas**. Si pasan diez minutos sin registrar ninguna finalización, aparecerá un **exceso de 10 minutos**.
+**Ejemplo:** una actividad creada hoy a las 14:00 y marcada como completada a las 14:45 tendrá un intervalo registrado de **45 minutos**. Ese tiempo es **tiempo de reloj transcurrido** y puede incluir descanso, interrupciones o inactividad: no es una prueba de 45 minutos de trabajo continuo.
 
-- La hora se obtiene mediante el **reloj local del dispositivo** y el cálculo se refresca cada **30 segundos**, al volver a la pestaña o recuperar el foco. El refresco no guarda datos ni reinicia los campos que estés editando.
-- Marcar una actividad o descanso como completado reduce **su carga pendiente**, pero **no acredita** que se hayan trabajado esos minutos en tiempo real. Las duraciones son estimaciones.
-- Si la hora actual es posterior a las 21:00, la capacidad restante de hoy es **0**; cualquier tarea pendiente seguirá visible y se señalará como exceso.
-- El **reporte diario ampliado** utiliza el mismo criterio temporal para su indicador de capacidad. Las horas de creación de actividades y descansos siguen conservándose por separado.
-- La función no altera la clasificación de fechas, el historial, las actividades, el progreso ni la base de datos SQLite.
+El panel de descansos conserva sus duraciones previstas y sus casillas de completado, sin sumarlas automáticamente a la medición del trabajo realizado. No se usa ya un reparto hipotético de 05:00 a 21:00 para calcular tiempos medidos.
 
 ## Registro real de fecha y hora de creación
 
@@ -100,25 +97,19 @@ Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador cap
 - **Reporte diario ampliado:** separa registros con marcas de tiempo reales (en orden cronológico de creación) de los registros históricos sin marca de tiempo.
 - **Persistencia:** los campos nuevos se conservan en SQLite local, en su copia JSON y en las exportaciones posteriores. La precisión depende del reloj del dispositivo, por lo que conviene mantenerlo correctamente configurado.
 
-**Importante:** la hora de creación **no indica** cuándo empezaste, terminaste o completaste una actividad. Utiliza el control de inicio y finalización descrito a continuación para registrar esas horas por separado.
+**Importante:** para las actividades nuevas creadas y programadas hoy, el sistema **usa la creación como inicio del contador automático** y el clic en «Completada» como finalización. Esto mide el intervalo entre ambos eventos, no necesariamente trabajo continuo.
 
-## Control deslizante de inicio y finalización de actividades
+## Inicio automático desde la creación y finalización al completar
 
-Cada actividad programada en un día de estudio, evaluación o proyecto tiene un apartado desplegable **«⏱ Registro de tiempo»**. Es independiente de la hora de creación de la tarea y de sus minutos estimados.
+1. **Crear una actividad para hoy:** al pulsar **«Agregar actividad»** en la fecha actual, el navegador guarda el instante de creación (`createdAt`) y establece automáticamente el inicio de esa actividad (`activityTimes[ID].startedAt`). El reloj empieza a transcurrir sin tocar ningún control de tiempo.
+2. **Marcar «Completada»:** al marcar la casilla de la actividad, se captura la fecha y hora actual del dispositivo en `finishedAt`. La medición deja de crecer y se muestra el intervalo transcurrido.
+3. **Desmarcarla:** se retira la hora de finalización, pero **se conserva el inicio original**. El contador vuelve a avanzar desde ese instante hasta la próxima finalización.
+4. **Consultar el reporte:** muestra las fechas de creación, inicio y finalización, el intervalo transcurrido y el estado de cada actividad; cuando está abierta, la cuenta del intervalo se actualiza automáticamente.
+5. **Conservar datos antiguos:** las horas ajustadas con los antiguos deslizadores **no se borran**. Aparecen identificadas como ajustes manuales históricos, pero no se mezclan con los totales medidos automáticamente.
 
-1. **Deslizar inicio:** abre el apartado y mueve **«Desliza la hora de inicio»**. Mientras arrastras verás la hora de 00:00 a 23:59; **al soltar** el control se guarda como **ajuste manual** para esa fecha.
-2. **Deslizar finalización:** mueve **«Desliza la hora de finalización»**. Al soltar se guarda la hora elegida como ajuste manual y la actividad se marca como completada.
-3. **«▶ Iniciar ahora» / «✓ Finalizar ahora»:** cuando la fecha seleccionada es **hoy**, estos botones capturan la hora real del dispositivo. **«Finalizar ahora»** también marca la tarea como completada. En fechas pasadas o futuras, los botones «Ahora» están deshabilitados; se pueden usar los deslizadores manuales.
-4. **«Limpiar horas»** borra únicamente las horas de inicio y finalización de esa fecha, sin borrar la actividad ni su marca de completado.
-5. **Casilla de completado:** al marcarla **hoy**, si todavía no existe una hora de finalización, se registra la hora actual. Desmarcarla quita la hora de finalización, pero conserva la de inicio. Marcarla para una fecha anterior no inventa una hora histórica.
+**Fechas y repeticiones:** un inicio automático solo se establece cuando la actividad nueva está programada en **el mismo día real de su creación**. Una actividad recurrente utiliza un registro de ejecución independiente por fecha; no se presume que trabajaste en otra fecha simplemente porque la tarea ya existía. Si una actividad antigua no tiene un inicio verificable, puede guardarse su hora de finalización al marcarla, pero el sistema no inventa una hora de comienzo ni un tiempo transcurrido.
 
-**Validación:** no se acepta que la hora de finalización sea anterior a la de inicio. Si se ajustan ambas, el calendario muestra el intervalo transcurrido entre ellas; cuando hay una hora manual, el resultado se identifica como **«Intervalo con ajustes manuales»** y no como tiempo real verificado.
-
-En el reporte ampliado se muestran por separado **hora de creación**, **hora de inicio**, **hora de finalización**, sus fuentes (reloj real o ajuste manual) y el intervalo registrado cuando ambas horas están disponibles. Para una actividad antigua sin registros se muestra **«No registrada»**. Las actividades recurrentes mantienen marcas de inicio y finalización **independientes para cada fecha**, aunque compartan una única hora de creación en el catálogo.
-
-Los datos se almacenan como `activityTimes` dentro del registro de la fecha en `calendar_days`, con campos `startedAt`, `finishedAt`, `startSource` y `finishSource`. Se conservan en SQLite, JSON y las exportaciones posteriores.
-
-**Nota:** las marcas del reloj dependen de la fecha, hora y zona horaria configuradas en tu dispositivo. Los deslizadores admiten cualquier hora dentro del día seleccionado y son ajustes manuales, no una medición automática de trabajo efectivo. La carga diaria prevista continúa calculándose a partir de los minutos planificados y el estado completado.
+Los datos se mantienen en `calendar_days[fecha].activityTimes[ID]`, con `startedAt`, `finishedAt`, `startSource` y `finishSource`, y se exportan tanto en SQLite como en JSON. La hora mostrada depende del reloj y la zona horaria de tu computadora.
 
 ## Formulario de descansos y comidas
 
@@ -129,11 +120,11 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 3. Indica una **duración en minutos** (de 5 a 960, en múltiplos de 5) y pulsa **«Agregar descanso»**. Se puede repetir para programar varias pausas, incluso después de la misma actividad.
 4. Cada descanso dispone de una casilla **«Completado»**, tanto en la lista de descansos personalizados como junto a su registro diario. Marca o desmarca una pausa sin modificar los minutos previstos; las dos vistas se mantienen sincronizadas.
 5. En la lista de descansos puedes editar el **nombre**, la **actividad después de la que ocurre** y la **duración**, o pulsar **«Eliminar pausa»**.
-6. Cada descanso personalizado muestra su **fecha y hora reales de creación** en lugar de horas hipotéticas de inicio y fin. El resumen indica **«Descansos completados: X/Y»** por separado de las actividades. Si la suma de duraciones previstas supera la referencia de 16 horas, aparece una advertencia.
+6. Cada descanso personalizado muestra su **fecha y hora reales de creación** sin inventar una hora de ejecución. El resumen mantiene **«Descansos completados: X/Y»** por separado de las actividades.
 
 ### Compatibilidad y recuperación de los descansos anteriores
 
-- Los días existentes mantienen sus **90 minutos de descansos automáticos estimados**, distribuidos entre actividades para calcular la capacidad diaria, sin asignarles horas reales inventadas. El total automático se puede modificar desde el mismo panel y sus pausas se pueden marcar como completadas desde la lista del día.
+- Los días existentes conservan sus **90 minutos de descansos automáticos previstos**, pero esos minutos ya no alimentan la medición de tiempo transcurrido de las actividades. El total previsto puede modificarse y los descansos pueden marcarse como completados.
 - **Al agregar el primer descanso personalizado**, ese día utiliza solamente los descansos que definas: ya no se suman automáticamente los 90 minutos anteriores.
 - **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
 - Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
@@ -156,7 +147,7 @@ Esta aplicación usa **SQLite real** mediante **sql.js 1.13.0 (WebAssembly)**. E
 | Tabla | Contenido |
 | --- | --- |
 | `calendar_meta` | Configuración global, historial de asignaciones de fechas, nombres y ajustes anteriores conservados por compatibilidad (JSON por clave). |
-| `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas, orden, descansos personalizados y sus marcas de creación. |
+| `calendar_days` | Un registro por fecha ISO `YYYY-MM-DD`, con su tipo de día, duraciones, tareas completas, orden, descansos y marcas de inicio y finalización por actividad. |
 | `calendar_activities` | Un registro por índice de actividad personalizada, incluida la fecha y hora real de creación de nuevas tareas y las marcas de eliminación. |
 
 Se escriben las tablas de forma transaccional. El archivo SQLite completo se serializa y se conserva en IndexedDB.
@@ -173,7 +164,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 ## Otras funciones
 
 - Selección automática de la fecha actual al abrir el calendario.
-- Duraciones previstas editables; fechas de creación e inicio/finalización registradas por separado, con deslizadores y botones de hora actual; capacidad estimada según la fecha seleccionada.
+- Duraciones previstas editables; inicio automático al crear una actividad para hoy, finalización al marcarla como completada y un contador en vivo basado en registros.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
 - Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
