@@ -109,12 +109,24 @@ function resetOrder(){get(selected).order=NAMES.map((_,i)=>i).filter(i=>!globall
 function minutes(s){return active(s)?visibleTasks(s).reduce((a,o)=>a+o.v,0):0}
 function done(s){const d=get(s);return active(s)?(d.done||[]).reduce((a,i)=>a+(eligible(s,i)&&!removed(s,i)?Number(durations(s)[i]||0):0),0):0}
 function modeChange(s,m){
-  const d=get(s);
-  if(d.mode===m)return;
+  if(!['undefined','free','evaluation','project','travel','off'].includes(m))return;
+  const d=get(s),previous=state(s);
+  if(previous===m)return;
   const dur=durations(s);
+  if(!d.modeDurations||typeof d.modeDurations!=='object')d.modeDurations={};
+  // Remember per-day edits when leaving study/evaluation so switching modes never erases them.
+  if(previous==='free'||previous==='evaluation')d.modeDurations[previous]=dur.slice(0,FIXED_COUNT);
   d.mode=m;
-  if(m==='evaluation'||m==='free')for(let i=0;i<FIXED_COUNT;i++)dur[i]=m==='evaluation'&&i>1?Math.round(BASE[i]/2/5)*5:BASE[i];
-  // Keep user-created activities and their individually edited durations unchanged.
+  if(m==='evaluation'||m==='free'){
+    const previousDurations=d.modeDurations[m];
+    for(let i=0;i<FIXED_COUNT;i++){
+      const savedDuration=Array.isArray(previousDurations)?previousDurations[i]:undefined;
+      dur[i]=typeof savedDuration==='number'&&Number.isFinite(savedDuration)&&savedDuration>=0
+        ?savedDuration
+        :m==='evaluation'&&i>1?Math.round(BASE[i]/2/5)*5:BASE[i];
+    }
+  }
+  // User-created activity durations, task IDs and completion records remain unchanged.
 }
 function deletePermanently(i){
   if(!Number.isInteger(i)||i<0||i>=NAMES.length||globallyDeleted(i))return;
