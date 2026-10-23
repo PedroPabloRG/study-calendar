@@ -89,7 +89,13 @@ function eligible(s,i){
   if(c.scope==='repeat')return state(s)==='free'||state(s)==='evaluation';
   if(c.scope==='evaluation')return state(s)==='evaluation';
   if(c.scope==='project')return state(s)==='project';
-  return (get(s).added||[]).includes(i);
+  if(c.scope==='day'){
+    const mode=state(s);
+    if(mode==='project'&&c.context!=='project')return false;
+    if(mode!=='project'&&c.context==='project')return false;
+    return (get(s).added||[]).includes(i);
+  }
+  return false;
 }
 function durations(s){
   const d=get(s);
@@ -165,7 +171,9 @@ function addActivity(){
   if(state(selected)!=='project'&&scope==='project')return;
   const duration=Math.round(raw),i=NAMES.length;
   if(!Array.isArray(db.catalog))db.catalog=[];
-  db.catalog.push({name,duration,scope});
+  const item={name,duration,scope};
+  if(scope==='day')item.context=state(selected);
+  db.catalog.push(item);
   syncCatalog();
   const d=get(selected);
   if(scope==='day'){if(!Array.isArray(d.added))d.added=[];d.added.push(i)}
