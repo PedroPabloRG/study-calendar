@@ -600,6 +600,7 @@ function deletePermanently(i){
     if(Array.isArray(day.dur)&&i<day.dur.length)day.dur[i]=0;
     if(Array.isArray(day.breakSchedule))day.breakSchedule=day.breakSchedule.filter(item=>item&&Number(item.after)!==i);
     if(Array.isArray(day.autoBreakDone))day.autoBreakDone=day.autoBreakDone.filter(id=>id!==i);
+    if(day.activityTimes&&typeof day.activityTimes==='object')delete day.activityTimes[String(i)];
   }
   syncCatalog();save();render();
 }
@@ -887,6 +888,7 @@ valid.forEach(({v,i},index)=>{
     '<button class="remove-task" data-remove="'+i+'" aria-label="Quitar '+esc(NAMES[i])+' solo de este día" title="Ocultar solo en esta fecha">Quitar</button>'+
     '<button class="rename-task" data-rename="'+i+'" aria-label="Renombrar '+esc(NAMES[i])+'" title="Cambiar el nombre en todas las fechas">✎ Renombrar</button>'+
     '<button class="delete-task" data-delete-global="'+i+'" aria-label="Eliminar permanentemente '+esc(NAMES[i])+' de todas las fechas" title="Eliminar definitivamente de todas las fechas">🗑 Eliminar</button></div></div>';
+  rows+=activityTimePanel(selected,i);
   for(const pause of breakAnchors.get(i)||[]){
     const label=esc(pause.label),doneAttribute=pause.done?' checked':'';
     const breakKey=pause.kind+':'+pause.breakIndex;
@@ -912,7 +914,70 @@ el('tasks').querySelectorAll('[data-break-complete]').forEach(input=>input.oncha
   const parts=input.dataset.breakComplete.split(':');
   setBreakCompleted(parts[0],Number(parts[1]),input.checked);
 });
-el('tasks').querySelectorAll('[data-check]').forEach(x=>x.onchange=()=>{const i=Number(x.dataset.check);d.done=x.checked?[...new Set([...(d.done||[]),i])]:d.done.filter(v=>v!==i);save();render()});el('tasks').querySelectorAll('[data-duration]').forEach(x=>x.onchange=()=>{d.dur[Number(x.dataset.duration)]=Math.max(0,Math.min(960,Math.round(Number(x.value)||0)));save();render()})}
+el('tasks').querySelectorAll('[data-time-start]').forEach(input=>{
+  input.oninput=()=>{
+    const out=el('tasks').querySelector('[data-time-preview-start="'+input.dataset.timeStart+'"]');
+    if(out)out.textContent='Inicio elegido: '+sliderClock(input.value)+' · pendiente de guardar';
+  };
+  input.onchange=()=>{
+    const i=Number(input.dataset.timeStart);
+    setActivityTimeFromSlider(i,'start',input.value);
+    const panel=el('tasks').querySelector('[data-time-panel="'+i+'"]');
+    if(panel)panel.open=true;
+  };
+});
+el('tasks').querySelectorAll('[data-time-finish]').forEach(input=>{
+  input.oninput=()=>{
+    const out=el('tasks').querySelector('[data-time-preview-finish="'+input.dataset.timeFinish+'"]');
+    if(out)out.textContent='Finalización elegida: '+sliderClock(input.value)+' · pendiente de guardar';
+  };
+  input.onchange=()=>{
+    const i=Number(input.dataset.timeFinish);
+    setActivityTimeFromSlider(i,'finish',input.value);
+    const panel=el('tasks').querySelector('[data-time-panel="'+i+'"]');
+    if(panel)panel.open=true;
+  };
+});
+el('tasks').querySelectorAll('[data-time-now-start]').forEach(button=>button.onclick=()=>{
+  const i=Number(button.dataset.timeNowStart);
+  setActivityNow(i,'start');
+  const panel=el('tasks').querySelector('[data-time-panel="'+i+'"]');
+  if(panel)panel.open=true;
+});
+el('tasks').querySelectorAll('[data-time-now-finish]').forEach(button=>button.onclick=()=>{
+  const i=Number(button.dataset.timeNowFinish);
+  setActivityNow(i,'finish');
+  const panel=el('tasks').querySelector('[data-time-panel="'+i+'"]');
+  if(panel)panel.open=true;
+});
+el('tasks').querySelectorAll('[data-time-clear]').forEach(button=>button.onclick=()=>{
+  const i=Number(button.dataset.timeClear);
+  clearActivityTime(i);
+  const panel=el('tasks').querySelector('[data-time-panel="'+i+'"]');
+  if(panel)panel.open=true;
+});
+el('tasks').querySelectorAll('[data-check]').forEach(x=>x.onchange=()=>{
+  const i=Number(x.dataset.check);
+  d.done=x.checked?[...new Set([...(d.done||[]),i])]:d.done.filter(v=>v!==i);
+  const time=activityTiming(selected,i);
+  if(x.checked&&selected===iso(new Date())&&!validCreationStamp(time.finishedAt)){
+    // Checking completion on today's date logs the actual current instant.
+    const now=new Date().toISOString();
+    if(!validCreationStamp(time.startedAt)||Date.parse(time.startedAt)<=Date.parse(now)){
+      if(!d.activityTimes||typeof d.activityTimes!=='object')d.activityTimes={};
+      d.activityTimes[String(i)]={...time,finishedAt:now,finishSource:'clock'};
+    }
+  }
+  if(!x.checked&&d.activityTimes?.[String(i)]){
+    delete d.activityTimes[String(i)].finishedAt;
+    delete d.activityTimes[String(i)].finishSource;
+  }
+  save();render();
+});
+el('tasks').querySelectorAll('[data-duration]').forEach(x=>x.onchange=()=>{
+  d.dur[Number(x.dataset.duration)]=Math.max(0,Math.min(960,Math.round(Number(x.value)||0)));
+  save();render();
+})}
 
 const DAY_TYPES={undefined:'No definido',free:'Libre / estudio',evaluation:'Evaluación',project:'Día de proyecto',travel:'Viaje',off:'No disponible'};
 const DAY_ORDER=['free','evaluation','project','travel','off','undefined'];
