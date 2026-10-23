@@ -10,51 +10,34 @@ Calendario web estático en español, pensado para **GitHub Pages**, con estudio
 
 Para una prueba local, sirve este directorio mediante un servidor HTTP sencillo (por ejemplo `python -m http.server 8000`) y abre `http://localhost:8000`. La página necesita acceso inicial a la biblioteca sql.js alojada en CDN.
 
-## Tipos de día
+## Tipos de día y asignación múltiple
 
-**Los días sin asignación explícita se muestran como «No definido»**, y no contienen tareas pendientes. El panel de cada fecha muestra su estado sin duplicar todos los tipos en un selector.
+Todas las fechas sin asignación explícita se muestran como **No definido**. Los **seis estados** del calendario se configuran desde una **única selección múltiple**, situada encima de las fechas:
 
-- **No definido:** sin actividades programadas.
-- **Libre / estudio:** cursos y materias normales.
-- **Evaluación:** aparecen las dos actividades universitarias y se prioriza su tiempo; las demás actividades inicialmente usan la mitad de su duración.
-- **Día de proyecto:** jornada para desarrollar proyectos, con tareas propias del proyecto en lugar de los cursos regulares.
-- **Viaje:** sin tareas programadas.
-- **No disponible:** sin tareas programadas.
+| Estado | Qué muestra el calendario |
+| --- | --- |
+| **No definido (limpiar días)** | Deja las fechas sin una clasificación activa y sin tareas pendientes visibles. |
+| **Libre / estudio** | Cursos y actividades habituales. |
+| **Evaluación** | Incluye las dos actividades universitarias; las restantes tienen inicialmente duraciones reducidas. |
+| **Día de proyecto** | Muestra las actividades de proyectos, sin mezclar automáticamente los cursos o actividades universitarias. |
+| **Viaje** | Día sin actividades programadas. |
+| **No disponible** | Día sin actividades programadas. |
 
-### Definir o quitar un día de proyecto
+### Cómo seleccionar y asignar fechas
 
-1. Pon **«Seleccionar» en «Un día (normal)»** y haz clic en la fecha deseada.
-2. En el panel del día, pulsa **«Marcar día de proyecto»**. El calendario mostrará ese día en azul verdoso y habilitará sus tareas de proyecto.
-3. Añade actividades con **«Solo este día»** o **«Todos los días de proyecto»**. Las tareas con esta segunda opción reaparecen en otros días que también marques como proyecto.
-4. Para desmarcarlo, pulsa **«Quitar día de proyecto»**: la fecha vuelve a **«No definido»**, sin borrar las actividades ni su progreso histórico.
-5. Si una fecha estaba marcada como estudio, evaluación, viaje o no disponible, se pedirá confirmación antes de convertirla en proyecto; sus registros se conservarán.
+1. En **Seleccionar**, elige **Varios días** para marcar fechas separadas (el segundo clic desmarca) o **Intervalo (dos clics)** para seleccionar todos los días entre una fecha inicial y final.
+2. Es posible cambiar de mes sin perder la selección temporal; en computadora también puedes usar **Mayús + clic** en el modo de varios días para seleccionar un tramo.
+3. En **Definir como**, elige cualquiera de los seis estados, incluido **Día de proyecto**.
+4. Pulsa **Aplicar a días seleccionados** y confirma. Los cambios se guardan en SQLite local y en el respaldo JSON.
+5. **Limpiar selección** únicamente desmarca los días resaltados. Para cambiar su estado a **No definido**, usa esa opción del selector y después pulsa el botón de aplicar.
 
-Las materias habituales (Coursera, física, matemáticas, etc.) y las tareas universitarias no se muestran automáticamente durante un día de proyecto. Las tareas de proyecto tampoco se mezclan con los días de estudio.
+El modo **Un día (normal)** sigue sirviendo para abrir una fecha y consultar o gestionar sus actividades. La sección separada de clasificación por intervalos y el botón individual de proyecto se retiraron por ser redundantes. **Periodos de planificación** sigue permitiendo modificar el inicio y el fin del periodo activo y recuperar periodos anteriores; no cambia los tipos de día.
 
-### Selección directa de viaje, días no disponibles o días no definidos
+### Días de proyecto y conservación del historial
 
-En el calendario, utiliza el selector **«Seleccionar»** situado sobre las fechas:
+Después de asignar **Día de proyecto** desde la selección múltiple, abre una de esas fechas en modo normal y agrega actividades con las opciones **Solo este día** o **Todos los días de proyecto**. Las tareas recurrentes de proyecto se mostrarán en las demás fechas que marques con ese estado.
 
-1. Elige **«Varios días»** para marcar fechas separadas. Un segundo clic desmarca una fecha. En computadora, **Mayús + clic** marca todas las fechas entre la última seleccionada y la actual.
-2. O elige **«Intervalo (dos clics)»** para indicar la fecha inicial y final de un rango continuo. También funciona sin teclado en teléfonos y permite navegar entre meses.
-3. En **«Definir como»**, selecciona una de las tres opciones:
-   - **Viaje:** marca las fechas como viaje.
-   - **No disponible:** marca las fechas como no disponibles.
-   - **No definido (limpiar días):** elimina la clasificación de los días seleccionados, incluso si antes eran de estudio, evaluación, viaje o no disponibles. **No borra actividades, duraciones ni progreso.**
-4. Pulsa **«Aplicar a días seleccionados»** (o **«Dejar N días como «No definido»»**). Confirma el cambio para guardarlo en SQLite local y en el respaldo JSON.
-5. **«Limpiar selección»** únicamente desmarca las fechas resaltadas. No modifica el estado de los días. Volver a **«Un día (normal)»** permite abrir las actividades de cada fecha.
-
-Puedes seleccionar días de varios meses antes de aplicar los cambios. La selección temporal no se guarda: solo se guardan las asignaciones confirmadas.
-
-### Días de estudio y evaluaciones
-
-La sección **«Definir días de estudio y evaluación por intervalo»** se conserva solo para asignar **Libre / estudio** o **Evaluación**. Se eliminó su control redundante de limpieza: para volver un rango a **No definido**, usa la selección múltiple directamente sobre el calendario.
-
-Así quedan organizadas las responsabilidades para evitar duplicaciones:
-
-- **Un día (normal):** ver el estado actual, tareas y marcar/desmarcar **Día de proyecto**.
-- **Selección múltiple:** asignar **Viaje**, **No disponible** o **No definido** a varios días, incluidos intervalos entre meses.
-- **Intervalo de estudio/evaluación:** asignar **Libre / estudio** o **Evaluación** para periodos específicos.
+Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
 
 ## Persistencia SQLite (local al navegador)
 
