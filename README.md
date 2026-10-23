@@ -20,17 +20,20 @@ Para una prueba local, sirve este directorio mediante un servidor HTTP sencillo 
 - **Viaje:** sin tareas programadas.
 - **No disponible:** sin tareas programadas.
 
-### Selección directa de viajes y días no disponibles
+### Selección directa de viaje, días no disponibles o días no definidos
 
 En el calendario, utiliza el selector **«Seleccionar»** situado sobre las fechas:
 
 1. Elige **«Varios días»** para marcar fechas separadas. Un segundo clic desmarca una fecha. En computadora, **Mayús + clic** marca todas las fechas entre la última seleccionada y la actual.
-2. O elige **«Intervalo (dos clics)»** para indicar la fecha inicial y final de un rango continuo. También funciona sin teclado en teléfonos y permite navegar entre meses para establecer el intervalo.
-3. En **«Definir como»**, selecciona **Viaje** o **No disponible** y pulsa **«Aplicar a días seleccionados»**.
-4. Confirma la asignación. Las fechas se guardan en el almacenamiento local SQLite y en el respaldo JSON. Si una fecha tenía tareas de estudio, sus registros se conservan, aunque no se muestran mientras tenga el tipo Viaje o No disponible.
-5. **«Limpiar selección»** descarta únicamente la selección temporal, sin cambiar estados previamente guardados. Volver a **«Un día (normal)»** permite abrir las actividades de cada fecha.
+2. O elige **«Intervalo (dos clics)»** para indicar la fecha inicial y final de un rango continuo. También funciona sin teclado en teléfonos y permite navegar entre meses.
+3. En **«Definir como»**, selecciona una de las tres opciones:
+   - **Viaje:** marca las fechas como viaje.
+   - **No disponible:** marca las fechas como no disponibles.
+   - **No definido (limpiar días):** elimina la clasificación de los días seleccionados, incluso si antes eran de estudio, evaluación, viaje o no disponibles. **No borra actividades, duraciones ni progreso.**
+4. Pulsa **«Aplicar a días seleccionados»** (o **«Dejar N días como «No definido»»**). Confirma el cambio para guardarlo en SQLite local y en el respaldo JSON.
+5. **«Limpiar selección»** únicamente desmarca las fechas resaltadas. No modifica el estado de los días. Volver a **«Un día (normal)»** permite abrir las actividades de cada fecha.
 
-Puedes seleccionar días de varios meses antes de aplicar los cambios. La selección temporal no se guarda: solo la asignación confirmada. Las fechas que no asignes se mantienen como **No definido**.
+Puedes seleccionar días de varios meses antes de aplicar los cambios. La selección temporal no se guarda: solo se guardan las asignaciones confirmadas.
 
 ### Días de estudio y evaluaciones
 
