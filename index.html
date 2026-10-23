@@ -239,7 +239,9 @@ function applyCalendarSelection(){
   if(changed.length)save();
   selectedDates.clear();selectionAnchor=null;awaitingEnd=false;
   selectionFeedback=changed.length?changed.length+' fecha(s) guardada(s) como «'+noun+'». Puedes seleccionar otro grupo.':'Todas las fechas ya tenían este tipo. No se cambió ningún registro.';
-  selected=dates[0];year=date(selected).getFullYear();month=date(selected).getMonth();
+  const currentMonthDates=dates.filter(s=>date(s).getFullYear()===year&&date(s).getMonth()===month);
+  selected=currentMonthDates.length?currentMonthDates[currentMonthDates.length-1]:dates[0];
+  if(!currentMonthDates.length){year=date(selected).getFullYear();month=date(selected).getMonth()}
   render();
 }
 function drawCalendar(){
