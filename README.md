@@ -21,7 +21,8 @@ Abre el archivo `index.html` en Chrome, Edge o Firefox. Selecciona fechas y marc
 - Actividades universitarias visibles únicamente durante evaluaciones.
 - Creación de actividades personalizadas para un día, todos los días de estudio o evaluaciones.
 - Reordenamiento de actividades por día y opción de quitarlas y restaurarlas.
-- **Eliminación permanente:** abre «Administrar actividades · Eliminar permanentemente», selecciona la actividad y confirma. Se elimina del horario y del progreso de todas las fechas. También se aplica a actividades originales. Para ocultarla solo en una fecha utiliza «Quitar».
+- **Eliminar permanentemente desde cada actividad:** junto a cada tarea verás los botones `↑`, `↓`, `Quitar` y `🗑 Eliminar`. Pulsa `🗑 Eliminar` y confirma para borrar la actividad y su progreso de **todas las fechas**. También se puede borrar desde la lista de actividades quitadas, o desde «Administrar actividades» cuando la tarea no esté visible en el día actual. Para ocultarla solamente en la fecha seleccionada utiliza `Quitar`.
+- **Verificar la actualización:** bajo el título del calendario debe aparecer `Actualización 23/10/2026 · Botón «🗑 Eliminar» disponible en cada actividad`. Si no aparece, fuerza la actualización del navegador con `Ctrl + F5` y verifica el estado de GitHub Pages.
 - Evaluaciones por rango de fechas.
 - Visualización del tiempo ocupado, descansos y tiempo restante.
 - Exportación e importación de respaldos JSON.
