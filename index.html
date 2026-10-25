@@ -99,7 +99,7 @@
 .day-report-warning{padding:12px;border-radius:9px;border:1px solid #b4824b;background:#413021;color:#ffe2b5}
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 23/10/2026 · Tiempo automático desde creación hasta completado · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 25/10/2026 · Editar inicios y eliminar descansos · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Tiempo registrado al completar</small><b id="planned"></b></div><div class="metric"><small>Tiempo en curso</small><b id="complete"></b></div><div class="metric"><small>Actividades completadas</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">Sin inicio registrado</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
@@ -123,7 +123,7 @@
 <label>Repetición<select id="newTaskScope"><option value="day">Solo este día</option><option value="repeat">Todos los días de estudio</option><option value="evaluation">Todos los días de evaluación</option></select></label>
 <button type="submit" id="addTaskButton">＋ Agregar actividad</button></form>
 <section class="break-planner" aria-labelledby="breakTitle">
-<div class="row"><div><h3 id="breakTitle">Descansos y comidas</h3><small id="breakModeInfo">Distribución automática de descansos.</small></div><button type="button" id="automaticBreaks">Usar distribución automática</button></div>
+<div class="row"><div><h3 id="breakTitle">Descansos y comidas</h3><small id="breakModeInfo">Distribución automática de descansos.</small></div><button type="button" id="automaticBreaks">Usar distribución automática</button><button type="button" id="restoreDeletedAuto" hidden>Restaurar descansos automáticos eliminados</button></div>
 <div class="auto-break-control"><label>Total automático (min) <input id="breaks" type="number" min="0" max="960" step="5" value="90"></label><small>Los descansos automáticos se reparten entre las actividades. Si creas descansos personalizados, reemplazan el reparto automático de ese día.</small></div>
 <form id="breakForm" class="break-form">
 <label>Descansar después de <select id="breakAfter" required></select></label>
@@ -132,7 +132,7 @@
 <button type="submit" id="addBreakButton">＋ Agregar descanso</button>
 </form>
 <div id="breakList" aria-live="polite"></div>
-<p><small>Al agregar un descanso se registra la fecha y hora reales del dispositivo. Puedes marcarlo como completado en la lista o en el registro del día; no se inventan horas de ejecución. Los descansos de actividades quitadas se conservan.</small></p>
+<p><small>Ahora puedes editar la hora de inicio (HH:MM) y eliminar cualquier descanso de esta fecha, incluso los automáticos. La creación y el inicio se registran por separado; los ajustes manuales se identifican y no sustituyen los datos originales de creación. Los descansos de actividades quitadas se conservan.</small></p>
 </section>
 <p><small><strong>Quitar</strong> = ocultar solo hoy. <strong>Renombrar</strong> = cambiar el nombre en todas las fechas sin perder el progreso. <strong>Eliminar</strong> = borrar de todas las fechas tras confirmar.</small></p><div id="tasks"></div><div id="removedTasks" class="removed-list"></div><details class="manage-panel" id="managePanel"><summary>Administrar actividades · Eliminar permanentemente</summary><p><small>Esta acción elimina la actividad de TODAS las fechas, incluidos sus registros. Para quitarla solo de hoy, utiliza «Quitar».</small></p><div id="manageActivities"></div></details><p><small>Las actividades y descansos creados desde ahora mostrarán la fecha y hora reales de creación, tomadas al pulsar «Agregar». Las duraciones son previstas, no pruebas de tiempo trabajado. Los registros anteriores sin fecha de creación seguirán disponibles y no se modificarán.</small></p></section>
 <section class="panel full"><div class="row"><div><h2>Resumen de periodos y fechas</h2><p><small>Información calculada a partir de los estados de las fechas guardadas. Los días consecutivos del mismo tipo se agrupan como un periodo.</small></p></div></div>
@@ -551,60 +551,94 @@ function restoreAutomaticBreaks(){
   save();render();
 }
 function drawBreakPlanner(s){
-  const d=get(s),enabled=active(s),valid=enabled?visibleTasks(s):[],custom=Array.isArray(d.breakSchedule);
+  const d=get(s),enabled=active(s),valid=enabled?visibleTasks(s):[],
+    custom=Array.isArray(d.breakSchedule);
   el('breaks').value=d.breaks??90;
   el('breaks').disabled=!enabled||custom;
   el('automaticBreaks').disabled=!enabled||!custom;
+  el('restoreDeletedAuto').hidden=custom||!enabled||!Array.isArray(d.autoBreakRemoved)||!d.autoBreakRemoved.length;
   el('breakAfter').disabled=!enabled||!valid.length;
   el('breakName').disabled=!enabled||!valid.length;
   el('breakMinutes').disabled=!enabled||!valid.length;
   el('addBreakButton').disabled=!enabled||!valid.length;
-  const progress=breakProgress(s);
+  const progress=breakProgress(s),pauses=enabled?breakPlanFor(s,valid):[];
   el('breakModeInfo').textContent=(custom?'Personalizados':'Automáticos')+
     ' · '+progress.completed+'/'+progress.total+' descansos completados · '+fmt(totalBreakMinutes(s))+' en total';
   el('breakAfter').innerHTML=valid.map(({i})=>'<option value="'+i+'">'+esc(NAMES[i])+'</option>').join('');
   const list=el('breakList');
   list.className='break-list';
-  if(!custom){
-    list.innerHTML='<p><small>Los descansos automáticos seguirán funcionando hasta que agregues tu primer descanso personalizado.</small></p>';
+  if(!enabled){
+    list.innerHTML='<p><small>Selecciona un día de estudio, evaluación o proyecto para gestionar sus descansos.</small></p>';
     return;
   }
-  if(!d.breakSchedule.length){list.innerHTML='<p><small>Sin descansos personalizados. Agrega uno arriba o vuelve al reparto automático.</small></p>';return}
-  list.innerHTML=d.breakSchedule.map((b,index)=>{
-    const exists=valid.some(x=>x.i===Number(b.after)),anchor=Number(b.after);
-    const selectedOption=valid.map(({i})=>'<option value="'+i+'" '+(i===anchor?'selected':'')+'>'+esc(NAMES[i])+'</option>').join('');
-    const missing=exists?'':('<option value="'+anchor+'" selected>'+(NAMES[anchor]?esc(NAMES[anchor]):'Actividad eliminada')+' (no programada)</option>');
-    const name=typeof b.name==='string'?b.name:'Descanso';
-    return '<div class="break-edit '+(b.done===true?'completed':'')+'">'+
-      '<label class="break-check"><input type="checkbox" data-break-list-check="'+index+'" '+(b.done===true?'checked':'')+' '+(!enabled||!exists?'disabled':'')+'> Completado</label>'+
-      '<label>Descanso <input type="text" maxlength="60" data-break-name="'+index+'" value="'+esc(name)+'" '+(!enabled?'disabled':'')+'></label>'+
-      '<label>Después de <select data-break-after="'+index+'" '+(!enabled?'disabled':'')+'>'+missing+selectedOption+'</select></label>'+
-      '<label>Minutos <input type="number" min="5" max="960" step="5" data-break-minutes="'+index+'" value="'+Number(b.minutes)+'" '+(!enabled?'disabled':'')+'></label>'+
-      '<button type="button" class="remove-break" data-remove-break="'+index+'" '+(!enabled?'disabled':'')+'>Eliminar pausa</button>'+
-      '<small>'+esc(creationLabel(b.createdAt))+'</small>'+
-      (!exists?'<small>La actividad asociada no está programada hoy: este descanso se conserva, pero no cuenta en los totales.</small>':'')+
-      '</div>';
-  }).join('');
+  if(custom){
+    if(!d.breakSchedule.length){
+      list.innerHTML='<p><small>Sin descansos personalizados. Agrega uno arriba o vuelve al reparto automático.</small></p>';
+      return;
+    }
+    list.innerHTML=d.breakSchedule.map((b,index)=>{
+      const exists=valid.some(x=>x.i===Number(b.after)),anchor=Number(b.after);
+      const selectedOptions=valid.map(({i})=>'<option value="'+i+'" '+(i===anchor?'selected':'')+'>'+esc(NAMES[i])+'</option>').join('');
+      const missing=exists?'':('<option value="'+anchor+'" selected>'+
+        (NAMES[anchor]?esc(NAMES[anchor]):'Actividad eliminada')+' (no programada)</option>');
+      const name=typeof b.name==='string'?b.name:'Descanso';
+      return '<div class="break-edit '+(b.done===true?'completed':'')+'">'+
+        '<label class="break-check"><input type="checkbox" data-break-list-check="custom:'+index+'" '+(b.done===true?'checked':'')+
+          (!exists?' disabled':'')+'> Completado</label>'+
+        '<label>Descanso <input type="text" maxlength="60" data-break-name="'+index+'" value="'+esc(name)+'"></label>'+
+        '<label>Después de <select data-break-after="'+index+'">'+missing+selectedOptions+'</select></label>'+
+        '<label>Minutos <input type="number" min="5" max="960" step="5" data-break-minutes="'+index+'" value="'+Number(b.minutes)+'"></label>'+
+        '<button type="button" class="remove-break" data-remove-break="custom:'+index+'">Eliminar descanso</button>'+
+        '<label class="break-start-edit">Editar hora de inicio <input type="time" step="60" data-break-start="custom:'+index+'" value="'+clockInputValue(b.startedAt)+'" aria-label="Editar inicio de '+esc(name)+'"></label>'+
+        '<small>'+esc(creationLabel(b.createdAt))+'</small>'+
+        '<small>'+esc(breakClockLabel(b))+'</small>'+
+        (!exists?'<small>La actividad asociada no está programada hoy: esta pausa no cuenta en el horario.</small>':'')+
+        '</div>';
+    }).join('');
+  }else{
+    list.innerHTML=pauses.length?pauses.map(p=>{
+      const key='auto:'+p.breakIndex;
+      return '<div class="break-edit '+(p.done?'completed':'')+'">'+
+        '<label class="break-check"><input type="checkbox" data-break-list-check="'+key+'" '+(p.done?'checked':'')+'> Completado</label>'+
+        '<div><strong>Descanso automático</strong><small style="display:block">Después de '+esc(NAMES[p.after])+' · '+fmt(p.minutes)+' previstos</small></div>'+
+        '<button type="button" class="remove-break" data-remove-break="'+key+'">Eliminar descanso</button>'+
+        '<label class="break-start-edit">Editar hora de inicio <input type="time" step="60" data-break-start="'+key+'" value="'+clockInputValue(p.startedAt)+'" aria-label="Editar inicio del descanso después de '+esc(NAMES[p.after])+'"></label>'+
+        '<small>'+esc(breakClockLabel(p))+'</small>'+
+        '</div>';
+    }).join(''):'<p><small>No quedan descansos automáticos programados para esta fecha. Puedes añadir uno personalizado o restaurar los eliminados.</small></p>';
+  }
   list.querySelectorAll('[data-break-list-check]').forEach(input=>input.onchange=()=>{
-    setBreakCompleted('custom',Number(input.dataset.breakListCheck),input.checked);
+    const [kind,index]=input.dataset.breakListCheck.split(':');
+    setBreakCompleted(kind,Number(index),input.checked);
   });
+  list.querySelectorAll('[data-break-start]').forEach(input=>input.onchange=()=>{
+    const [kind,index]=input.dataset.breakStart.split(':');
+    updateBreakStart(kind,Number(index),input.value);
+  });
+  list.querySelectorAll('[data-remove-break]').forEach(button=>button.onclick=()=>{
+    const [kind,index]=button.dataset.removeBreak.split(':');
+    removeBreak(kind,Number(index));
+  });
+  if(!custom)return;
   list.querySelectorAll('[data-break-name]').forEach(input=>input.onchange=()=>{
     const index=Number(input.dataset.breakName);
+    if(!d.breakSchedule[index])return;
     d.breakSchedule[index].name=input.value.trim().slice(0,60)||'Descanso';
     save();render();
   });
   list.querySelectorAll('[data-break-after]').forEach(input=>input.onchange=()=>{
     const index=Number(input.dataset.breakAfter),id=Number(input.value);
     if(!valid.some(task=>task.i===id)){alert('Elige una actividad programada.');render();return}
+    if(!d.breakSchedule[index])return;
     d.breakSchedule[index].after=id;save();render();
   });
   list.querySelectorAll('[data-break-minutes]').forEach(input=>input.onchange=()=>{
     const index=Number(input.dataset.breakMinutes),minutes=Number(input.value);
-    if(!Number.isInteger(minutes)||minutes<5||minutes>960||minutes%5!==0){alert('Indica una duración entre 5 y 960 minutos, en múltiplos de 5.');render();return}
+    if(!Number.isInteger(minutes)||minutes<5||minutes>960||minutes%5!==0){
+      alert('Indica una duración entre 5 y 960 minutos, en múltiplos de 5.');render();return;
+    }
+    if(!d.breakSchedule[index])return;
     d.breakSchedule[index].minutes=minutes;save();render();
-  });
-  list.querySelectorAll('[data-remove-break]').forEach(button=>button.onclick=()=>{
-    d.breakSchedule.splice(Number(button.dataset.removeBreak),1);save();render();
   });
 }
 function done(s){const d=get(s);return active(s)?(d.done||[]).reduce((a,i)=>a+(eligible(s,i)&&!removed(s,i)?Number(durations(s)[i]||0):0),0):0}
@@ -943,9 +977,11 @@ valid.forEach(({v,i},index)=>{
   for(const pause of breakAnchors.get(i)||[]){
     const label=esc(pause.label),doneAttribute=pause.done?' checked':'';
     const breakKey=pause.kind+':'+pause.breakIndex;
-    rows+='<label class="pause '+(pause.done?'break-done':'')+'"><input type="checkbox" data-break-complete="'+breakKey+'" aria-label="Marcar como completado el descanso '+label+'"'+doneAttribute+'>'+
+    rows+='<div class="pause '+(pause.done?'break-done':'')+'"><label><input type="checkbox" data-break-complete="'+breakKey+'" aria-label="Marcar como completado el descanso '+label+'"'+doneAttribute+'>'+
       '<span>☕ '+label+' · Duración prevista: '+fmt(pause.minutes)+
-      '<small style="display:block">'+esc(creationLabel(pause.createdAt))+'</small></span></label>';
+      '<small style="display:block">'+esc(creationLabel(pause.createdAt))+'</small>'+
+      '<small style="display:block">'+esc(breakClockLabel(pause))+'</small></span></label>'+
+      '<button type="button" class="pause-delete" data-break-delete="'+breakKey+'" aria-label="Eliminar '+label+' de esta fecha">Eliminar</button></div>';
   }
 });
 if(!valid.length){
@@ -964,6 +1000,10 @@ el('tasks').querySelectorAll('[data-move]').forEach(x=>x.onclick=()=>moveActivit
 el('tasks').querySelectorAll('[data-break-complete]').forEach(input=>input.onchange=()=>{
   const parts=input.dataset.breakComplete.split(':');
   setBreakCompleted(parts[0],Number(parts[1]),input.checked);
+});
+el('tasks').querySelectorAll('[data-break-delete]').forEach(button=>button.onclick=()=>{
+  const [kind,index]=button.dataset.breakDelete.split(':');
+  removeBreak(kind,Number(index));
 });
 el('tasks').querySelectorAll('[data-edit-activity-start]').forEach(input=>input.onchange=()=>{
   updateActivityStart(Number(input.dataset.editActivityStart),input.value);
@@ -1125,6 +1165,7 @@ el('closeDayReport').onclick=closeDayReport;
 el('addTaskForm').onsubmit=e=>{e.preventDefault();addActivity()};
 el('breakForm').onsubmit=e=>{e.preventDefault();addBreak()};
 el('automaticBreaks').onclick=restoreAutomaticBreaks;
+el('restoreDeletedAuto').onclick=restoreDeletedAutomaticBreaks;
 el('breaks').onchange=e=>{get(selected).breaks=Math.max(0,Math.min(960,Number(e.target.value)||0));save();render()};
 el('prev').onclick=()=>{month--;if(month<0){month=11;year--}drawCalendar()};el('next').onclick=()=>{month++;if(month>11){month=0;year++}drawCalendar()};el('today').onclick=()=>{selected=iso(new Date());year=date(selected).getFullYear();month=date(selected).getMonth();if(calendarSelectionMode==='single'){selectedDates.clear();selectedDates.add(selected);selectionAnchor=selected;awaitingEnd=false;}render()};
 el('reset').onclick=()=>{if(confirm('¿Restablecer duración y progreso del día seleccionado?')){delete db.days[selected];save();render()}};
