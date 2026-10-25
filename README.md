@@ -109,6 +109,15 @@ Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador cap
 
 **Fechas y repeticiones:** un inicio automático solo se establece cuando la actividad nueva está programada en **el mismo día real de su creación**. Una actividad recurrente utiliza un registro de ejecución independiente por fecha; no se presume que trabajaste en otra fecha simplemente porque la tarea ya existía. Si una actividad antigua no tiene un inicio verificable, puede guardarse su hora de finalización al marcarla, pero el sistema no inventa una hora de comienzo ni un tiempo transcurrido.
 
+### Editar la hora de inicio de una actividad
+
+Debajo de cada actividad aparece **«Editar hora de inicio (HH:MM)»**. Usa el selector de hora para corregir el inicio de **esa fecha**, sin modificar la fecha de creación original ni la duración prevista. Al cambiar el valor se guarda automáticamente:
+
+- Se acepta una hora que **ya haya ocurrido**, no un inicio futuro. Para una fecha pasada puedes corregir la hora dentro de ese día; una fecha futura no admite todavía una hora de ejecución.
+- Si la actividad ya tiene una finalización, el inicio corregido no puede quedar **después** de esa hora. Si hay un error, se avisa y se conserva el valor anterior.
+- Se registra `startSource: "manual"`. El tiempo transcurrido se recalcula, pero los intervalos ajustados manualmente aparecen **separados** de los intervalos medidos sin correcciones, para no confundirlos.
+- Las actividades antiguas sin inicio pueden recibir una corrección explícita; no se les asigna una hora retrospectiva automáticamente.
+
 Los datos se mantienen en `calendar_days[fecha].activityTimes[ID]`, con `startedAt`, `finishedAt`, `startSource` y `finishSource`, y se exportan tanto en SQLite como en JSON. La hora mostrada depende del reloj y la zona horaria de tu computadora.
 
 ## Formulario de descansos y comidas
@@ -119,17 +128,20 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 2. Escribe un **nombre**, por ejemplo «Desayuno», «Comida», «Caminar» o «Descanso».
 3. Indica una **duración en minutos** (de 5 a 960, en múltiplos de 5) y pulsa **«Agregar descanso»**. Se puede repetir para programar varias pausas, incluso después de la misma actividad.
 4. Cada descanso dispone de una casilla **«Completado»**, tanto en la lista de descansos personalizados como junto a su registro diario. Marca o desmarca una pausa sin modificar los minutos previstos; las dos vistas se mantienen sincronizadas.
-5. En la lista de descansos puedes editar el **nombre**, la **actividad después de la que ocurre** y la **duración**, o pulsar **«Eliminar pausa»**.
-6. Cada descanso personalizado muestra su **fecha y hora reales de creación** sin inventar una hora de ejecución. El resumen mantiene **«Descansos completados: X/Y»** por separado de las actividades.
+5. En **«Editar hora de inicio»** de cada descanso puedes corregir su hora (HH:MM), tanto si es **personalizado** como si procede del reparto **automático**. El cambio se guarda por fecha como un ajuste manual, preservando la hora original de creación cuando exista. No se permiten inicios futuros ni posteriores a una finalización registrada.
+6. Pulsa **«Eliminar descanso»** en su lista de edición o **«Eliminar»** junto a la pausa en el horario. La eliminación solicita confirmación y afecta **solo a la fecha seleccionada**, nunca a las actividades. Esto funciona para pausas personalizadas y automáticas.
+7. Los descansos automáticos eliminados dejan de contarse en el día y puedes recuperarlos con **«Restaurar descansos automáticos eliminados»**. Los personalizados se eliminan de su lista y pueden volver a crearse con el formulario.
+8. Al marcar como completado un descanso **hoy**, se guarda su hora real de finalización. Desmarcarlo retira esa finalización, conservando el inicio registrado. Las pausas anteriores sin inicio conocido mantienen el dato sin inventarlo.
 
 ### Compatibilidad y recuperación de los descansos anteriores
 
-- Los días existentes conservan sus **90 minutos de descansos automáticos previstos**, pero esos minutos ya no alimentan la medición de tiempo transcurrido de las actividades. El total previsto puede modificarse y los descansos pueden marcarse como completados.
+- Los días existentes conservan sus **90 minutos de descansos automáticos previstos**, pero esos minutos ya no alimentan la medición de tiempo transcurrido de las actividades. Al eliminar una pausa automática se excluyen sus minutos de ese día sin redistribuirlos entre las restantes; su total previsto puede modificarse desde el campo automático.
 - **Al agregar el primer descanso personalizado**, ese día utiliza solamente los descansos que definas: ya no se suman automáticamente los 90 minutos anteriores.
+- La lista permite **eliminar incluso descansos cuya actividad asociada esté temporalmente oculta**. Esto no elimina la actividad ni sus registros.
 - **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
 - Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
 - En días **No definido**, **Viaje** o **No disponible** no se programan descansos.
-- Cada fecha guarda sus descansos, sus marcas de completado y, para descansos nuevos, su fecha y hora de creación en `calendar_days` de SQLite y en el respaldo JSON. Los descansos anteriores mantienen su información, sin inventar una hora de creación retrospectiva.
+- Cada fecha guarda sus descansos, marcas de completado y horas de inicio/finalización en `calendar_days` de SQLite y en el respaldo JSON. Los descansos personalizados utilizan `startedAt` y `startSource` (además de `createdAt`); los automáticos guardan sus correcciones en `autoBreakTimes` y los eliminados en `autoBreakRemoved`. Estos datos se mantienen independientes por fecha y no alteran el historial anterior.
 
 ## Persistencia SQLite (local al navegador)
 
