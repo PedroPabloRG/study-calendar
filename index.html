@@ -456,16 +456,31 @@ function breakProgress(s){
   const pauses=breakPlanFor(s);
   return {completed:pauses.filter(p=>p.done).length,total:pauses.length};
 }
-function breakClockLabel(item){
+function breakClockLabel(item,now=new Date()){
   const started=timeStampFull(item.startedAt,item.startSource);
   const finished=timeStampFull(item.finishedAt,item.finishSource);
-  let elapsed='';
-  if(validCreationStamp(item.startedAt)){
-    const end=validCreationStamp(item.finishedAt)?Date.parse(item.finishedAt):Date.now();
-    const span=end-Date.parse(item.startedAt);
-    if(span>=0)elapsed=' · '+elapsedClock(span)+(validCreationStamp(item.finishedAt)?' transcurridos':' en curso');
+  const first=validCreationStamp(item.startedAt),last=validCreationStamp(item.finishedAt);
+  let interval='Sin intervalo medible';
+  if(first&&last){
+    const elapsed=Date.parse(item.finishedAt)-Date.parse(item.startedAt);
+    interval=elapsed>=0&&item.done===true
+      ?'Tiempo definitivo: '+elapsedClock(elapsed)+(item.startSource==='manual'||item.finishSource==='manual'?' · incluye ajuste manual':'')
+      :'Finalización no confirmada';
+  }else if(first&&!last&&!item.done){
+    const elapsed=now.getTime()-Date.parse(item.startedAt);
+    interval=elapsed>=0?'En curso: '+elapsedClock(elapsed)+(item.startSource==='manual'?' · inicio ajustado':''):'Hora de inicio futura';
+  }else if(last&&!first){
+    interval='Finalización registrada sin hora de inicio';
   }
-  return 'Inicio: '+started+' · Finalización: '+finished+elapsed;
+  return 'Inicio: '+started+' · Hora definitiva de finalización: '+finished+' · '+interval;
+}
+function savedBreakRecord(s,kind,index){
+  const day=db.days?.[s]||{};
+  if(kind==='custom')return day.breakSchedule?.[index]||null;
+  if(kind==='auto'){
+    return breakPlanFor(s).find(p=>p.kind==='auto'&&p.breakIndex===index)||null;
+  }
+  return null;
 }
 function updateBreakStart(kind,index,rawTime){
   const d=get(selected);
@@ -487,6 +502,27 @@ function updateBreakStart(kind,index,rawTime){
   }else if(kind==='auto'){
     if(!d.autoBreakTimes||typeof d.autoBreakTimes!=='object')d.autoBreakTimes={};
     d.autoBreakTimes[String(index)]={...d.autoBreakTimes[String(index)],startedAt:start,startSource:'manual'};
+  }else return;
+  save();render();
+}
+function updateBreakFinish(kind,index,rawTime){
+  const d=get(selected);
+  const pause=savedBreakRecord(selected,kind,index);
+  if(!active(selected)||!pause){alert('El descanso ya no está disponible.');render();return}
+  const finish=revisedStartTimestamp(selected,rawTime);
+  if(!finish){alert('Introduce una hora definitiva válida para el descanso (HH:MM).');render();return}
+  if(Date.parse(finish)>Date.now()){alert('No puedes registrar una finalización futura de descanso.');render();return}
+  if(validCreationStamp(pause.startedAt)&&Date.parse(finish)<Date.parse(pause.startedAt)){
+    alert('La finalización definitiva del descanso no puede ser anterior a su inicio.');render();return;
+  }
+  if(kind==='custom'){
+    if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
+    Object.assign(d.breakSchedule[index],{finishedAt:finish,finishSource:'manual',done:true});
+  }else if(kind==='auto'){
+    if(!d.autoBreakTimes||typeof d.autoBreakTimes!=='object')d.autoBreakTimes={};
+    d.autoBreakTimes[String(index)]={...d.autoBreakTimes[String(index)],finishedAt:finish,finishSource:'manual'};
+    if(!Array.isArray(d.autoBreakDone))d.autoBreakDone=[];
+    d.autoBreakDone=[...new Set([...d.autoBreakDone,index])];
   }else return;
   save();render();
 }
@@ -542,6 +578,7 @@ function setBreakCompleted(kind,index,checked){
     delete record.finishedAt;
     delete record.finishSource;
   }
+  // Historical checkboxes change progress only. Today's clock is never backdated.
   save();render();
 }
 function addBreak(){
