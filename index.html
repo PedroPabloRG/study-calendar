@@ -99,7 +99,7 @@
 .day-report-warning{padding:12px;border-radius:9px;border:1px solid #b4824b;background:#413021;color:#ffe2b5}
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
-<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 25/10/2026 · Editar inicios y eliminar descansos · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
+<header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 25/10/2026 · Tiempo definitivo con ajustes manuales · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
 <section class="metrics"><div class="metric"><small>Tiempo definitivo · actividades</small><b id="planned"></b></div><div class="metric"><small>Tiempo definitivo · descansos</small><b id="complete"></b></div><div class="metric"><small>En curso · actividades</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">En curso · descansos</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
@@ -974,6 +974,7 @@ function openDayReport(s){
   pauses.forEach((pause,position)=>events.push({
     createdAt:pause.createdAt,startedAt:pause.startedAt,startSource:pause.startSource,
     finishedAt:pause.finishedAt,finishSource:pause.finishSource,
+    breakKind:pause.kind,breakIndex:pause.breakIndex,
     kind:'break',label:pause.label,minutes:pause.minutes,done:pause.done,position
   }));
   const eventStamp=item=>{
@@ -989,10 +990,9 @@ function openDayReport(s){
     const timing=item.kind==='task'?item.timing:{};
     const timeDetails=item.kind==='task'
       ?'<small>Inicio: '+esc(timeStampFull(timing.startedAt,timing.startSource))+'</small>'+
-       '<small>Finalización: '+esc(timeStampFull(timing.finishedAt,timing.finishSource))+'</small>'+
+       '<small>Hora definitiva de finalización: '+esc(timeStampFull(timing.finishedAt,timing.finishSource))+'</small>'+
        '<small data-report-live-clock="'+item.i+'">'+esc(activityTrackedSpan(s,item.i))+'</small>'
-      :'<small>Inicio del descanso: '+esc(timeStampFull(item.startedAt,item.startSource))+'</small>'+
-       '<small>Finalización del descanso: '+esc(timeStampFull(item.finishedAt,item.finishSource))+'</small>';
+      :'<small data-report-live-break="'+item.breakKind+':'+item.breakIndex+'">'+esc(breakClockLabel(item))+'</small>';
     return '<div class="day-report-line '+(item.kind==='break'?'pause-line ':'')+(item.done?'done':'')+'">'+
       '<span class="report-clock">'+esc(creationLabel(item.createdAt))+'</span>'+
       '<span class="report-label"><strong>'+label+'</strong><small>'+fmt(item.minutes)+' previstos '+kind+'</small>'+timeDetails+'</span>'+
@@ -1016,17 +1016,20 @@ function openDayReport(s){
     metric('Finalizaciones registradas',tasks.filter(t=>validCreationStamp(activityTiming(s,t.i).finishedAt)).length+' / '+tasks.length)+
     metric('Descansos completados',finishedPauses+' / '+pauses.length)+
     metric('Descansos previstos',fmt(restMinutes))+
-    metric('Tiempo medido al completar',elapsedClock(recorded.completedMs))+
-    metric('Tiempo en curso',elapsedClock(recorded.runningMs))+
-    (recorded.manualCount?metric('Intervalos completados ajustados',elapsedClock(recorded.manualMs)):'')+
-    (recorded.manualRunningCount?metric('Tiempo en curso con inicio ajustado',elapsedClock(recorded.manualRunningMs)):'')+
-    metric('Actividades sin inicio',recorded.unstartedCount+' / '+recorded.tasks);
+    metric('Tiempo definitivo de actividades',elapsedClock(recorded.completedMs))+
+    metric('Tiempo definitivo de descansos',elapsedClock(recorded.breakCompletedMs))+
+    metric('Actividades en curso',elapsedClock(recorded.runningMs))+
+    metric('Descansos en curso',elapsedClock(recorded.breakRunningMs))+
+    (recorded.manualCount?metric('De actividades con ajuste manual',elapsedClock(recorded.manualMs)):'')+
+    (recorded.breakManualCount?metric('De descansos con ajuste manual',elapsedClock(recorded.breakManualMs)):'')+
+    metric('Actividades sin inicio',recorded.unstartedCount+' / '+recorded.tasks)+
+    metric('Descansos sin inicio',recorded.breakUnstartedCount+' / '+recorded.pauses);
   el('dayReportContent').innerHTML=
     '<div class="day-report-date"><div class="day-report-number">'+number+'</div><div>'+
     '<h2 id="dayReportHeading">'+weekday.charAt(0).toUpperCase()+weekday.slice(1)+'<span style="display:block">'+monthYear+'</span></h2>'+
     '<p>'+s+' · Registro de creaciones y duraciones previstas</p><span class="day-report-badge">'+status+'</span></div></div>'+
     '<div class="day-report-metrics">'+metrics+'</div>'+
-    '<p class="recorded-note">El tiempo se mide automáticamente desde la creación de cada nueva actividad de hoy hasta que se marca como completada. Las horas antiguas ajustadas manualmente se conservan identificadas. El intervalo puede incluir pausas e inactividad, y no es prueba de trabajo continuo.</p>'+
+    '<p class="recorded-note">El tiempo definitivo se calcula entre las horas de inicio y finalización registradas, incluidas las correcciones manuales, tanto de actividades como de descansos. Las horas ajustadas se identifican y ya están incluidas en los totales: no se deben sumar otra vez. Los intervalos de actividades y descansos pueden solaparse; no equivalen necesariamente a trabajo continuo.</p>'+
     '<h3 class="day-report-section-title">Registro de actividades y descansos del día</h3>'+timeline+
     (!activeDay?'<p><small>Los registros de actividades anteriores se conservan, pero no se muestran mientras el día tenga este estado.</small></p>':'');
   const dialog=el('dayReportDialog');
@@ -1246,9 +1249,21 @@ function refreshRecordedTime(){
   el('tasks').querySelectorAll('[data-live-clock]').forEach(node=>{
     node.textContent=activityTrackedSpan(selected,Number(node.dataset.liveClock),now);
   });
+  for(const container of [el('tasks'),el('breakList')]){
+    container.querySelectorAll('[data-live-break]').forEach(node=>{
+      const [kind,index]=node.dataset.liveBreak.split(':');
+      const pause=savedBreakRecord(selected,kind,Number(index));
+      if(pause)node.textContent=breakClockLabel(pause,now);
+    });
+  }
   if(el('dayReportDialog').open){
     el('dayReportContent').querySelectorAll('[data-report-live-clock]').forEach(node=>{
       node.textContent=activityTrackedSpan(selected,Number(node.dataset.reportLiveClock),now);
+    });
+    el('dayReportContent').querySelectorAll('[data-report-live-break]').forEach(node=>{
+      const [kind,index]=node.dataset.reportLiveBreak.split(':');
+      const pause=savedBreakRecord(selected,kind,Number(index));
+      if(pause)node.textContent=breakClockLabel(pause,now);
     });
   }
 }
