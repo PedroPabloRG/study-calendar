@@ -100,7 +100,7 @@
 @media(max-width:540px){.day-report-line{grid-template-columns:1fr auto;gap:5px}.day-report-line .report-clock{grid-column:1/-1}.day-report-date{gap:12px}.day-report-number{font-size:78px}.day-report-metric strong{font-size:18px}}
 .sqlite-status{display:inline-block;font-size:12px;padding:6px 10px;border:1px solid #4e748b;border-radius:9px;background:#153544;color:#b1f2ef}.sqlite-status.warning{border-color:#9d7441;background:#3b2b19;color:#ffdc99}.sqlite-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.sqlite-actions button{font-size:13px}</style></head><body><main class="wrap">
 <header><div><h1>📅 Mi calendario de estudios</h1><p>05:00 despertar · 21:00 dormir · Universidad solo en evaluaciones · Días sin asignar: No definido</p><p style="color:#8ef2be;font-weight:600">Actualización 25/10/2026 · Editar inicios y eliminar descansos · SQLite local</p></div><div class="toolbar"><button id="today">Hoy</button><button id="backup">Exportar JSON</button><label>Importar JSON <input type="file" id="restore" accept=".json,application/json" style="max-width:180px"></label><div class="sqlite-actions"><button type="button" id="downloadSqlite" disabled>Exportar SQLite</button><label>Importar SQLite <input type="file" id="importSqlite" accept=".sqlite,.sqlite3,.db,application/vnd.sqlite3" style="max-width:190px"></label></div><span class="sqlite-status" id="dbStatus" role="status" aria-live="polite">Cargando SQLite…</span></div></header>
-<section class="metrics"><div class="metric"><small>Tiempo registrado al completar</small><b id="planned"></b></div><div class="metric"><small>Tiempo en curso</small><b id="complete"></b></div><div class="metric"><small>Actividades completadas</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">Sin inicio registrado</small><b id="remaining"></b></div></section>
+<section class="metrics"><div class="metric"><small>Tiempo definitivo · actividades</small><b id="planned"></b></div><div class="metric"><small>Tiempo definitivo · descansos</small><b id="complete"></b></div><div class="metric"><small>En curso · actividades</small><b id="pending"></b></div><div class="metric"><small id="remainingLabel">En curso · descansos</small><b id="remaining"></b></div></section>
 <div class="grid"><section class="panel"><div class="row"><div><h2 id="monthtitle"></h2><small>Clasifica las fechas directamente en el calendario</small></div><div class="toolbar"><button id="prev" aria-label="Mes anterior">←</button><button id="next" aria-label="Mes siguiente">→</button></div></div><section class="multi-select-tools" aria-label="Selección múltiple de días en el calendario">
 <div class="toolbar">
 <label for="selectionMode">Seleccionar <select id="selectionMode"><option value="single">Un día (consultar y asignar)</option><option value="multi">Varios días</option><option value="range">Intervalo (dos clics)</option></select></label>
@@ -368,58 +368,92 @@ function activityTimePanel(s,i){
 }
 
 // Only recorded start/end timestamps can produce a measured elapsed interval.
+// Consolidate every valid start/end interval, including manual corrections.
+// "Manual" is provenance, not an exclusion from completed/running totals.
 function recordedSnapshot(s,now=new Date()){
   const tasks=active(s)?visibleTasks(s):[],d=get(s),pauses=breakPlanFor(s,tasks);
-  let completedMs=0,runningMs=0,manualMs=0,manualRunningMs=0,measuredCount=0,
-      runningCount=0,manualRunningCount=0,unstartedCount=0,manualCount=0,incompleteEndCount=0;
+  let completedMs=0,runningMs=0,manualMs=0,manualRunningMs=0,
+    breakCompletedMs=0,breakRunningMs=0,breakManualMs=0,breakManualRunningMs=0,
+    measuredCount=0,runningCount=0,unstartedCount=0,manualCount=0,manualRunningCount=0,
+    breakMeasuredCount=0,breakRunningCount=0,breakManualCount=0,breakUnstartedCount=0,
+    incompleteEndCount=0,breakIncompleteEndCount=0;
   const completed=new Set(Array.isArray(d.done)?d.done:[]);
   for(const task of tasks){
-    const t=activityTiming(s,task.i),hasStart=validCreationStamp(t.startedAt),
-      hasEnd=validCreationStamp(t.finishedAt),done=completed.has(task.i);
+    const entry=activityTiming(s,task.i);
+    const hasStart=validCreationStamp(entry.startedAt),hasEnd=validCreationStamp(entry.finishedAt),
+      isDone=completed.has(task.i);
     if(!hasStart)unstartedCount++;
-    if(done&&!hasEnd)incompleteEndCount++;
+    if(isDone&&!hasEnd)incompleteEndCount++;
+    if(!hasStart)continue;
     const elapsed=activityElapsed(s,task.i,now);
     if(elapsed===null)continue;
-    if(hasEnd&&done&&autoClockSource(t.startSource)&&t.finishSource==='clock'){
+    const adjusted=entry.startSource==='manual'||entry.finishSource==='manual';
+    if(isDone&&hasEnd){
       completedMs+=elapsed;measuredCount++;
-    }else if(hasEnd&&done){
-      manualMs+=elapsed;manualCount++;
-    }else if(hasStart&&!done&&!hasEnd&&autoClockSource(t.startSource)){
+      if(adjusted){manualMs+=elapsed;manualCount++}
+    }else if(!isDone&&!hasEnd){
       runningMs+=elapsed;runningCount++;
-    }else if(hasStart&&!done&&!hasEnd){
-      manualRunningMs+=elapsed;manualRunningCount++;
+      if(adjusted){manualRunningMs+=elapsed;manualRunningCount++}
+    }
+  }
+  for(const pause of pauses){
+    const hasStart=validCreationStamp(pause.startedAt),hasEnd=validCreationStamp(pause.finishedAt);
+    if(!hasStart)breakUnstartedCount++;
+    if(pause.done&&!hasEnd)breakIncompleteEndCount++;
+    if(!hasStart)continue;
+    const end=hasEnd?Date.parse(pause.finishedAt):now.getTime();
+    const elapsed=end-Date.parse(pause.startedAt);
+    if(!Number.isFinite(elapsed)||elapsed<0)continue;
+    const adjusted=pause.startSource==='manual'||pause.finishSource==='manual';
+    if(pause.done&&hasEnd){
+      breakCompletedMs+=elapsed;breakMeasuredCount++;
+      if(adjusted){breakManualMs+=elapsed;breakManualCount++}
+    }else if(!pause.done&&!hasEnd){
+      breakRunningMs+=elapsed;breakRunningCount++;
+      if(adjusted)breakManualRunningMs+=elapsed;
     }
   }
   return {
     tasks:tasks.length,completed:tasks.filter(t=>completed.has(t.i)).length,
     pauses:pauses.length,pausesDone:pauses.filter(p=>p.done).length,
-    completedMs,runningMs,manualMs,manualRunningMs,measuredCount,runningCount,manualRunningCount,unstartedCount,
-    manualCount,incompleteEndCount,clockText:pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds()),
-    plannedMinutes:tasks.reduce((a,t)=>a+t.v,0)
+    completedMs,runningMs,manualMs,manualRunningMs,breakCompletedMs,breakRunningMs,
+    breakManualMs,breakManualRunningMs,measuredCount,runningCount,unstartedCount,
+    manualCount,manualRunningCount,breakMeasuredCount,breakRunningCount,
+    breakManualCount,breakUnstartedCount,incompleteEndCount,breakIncompleteEndCount,
+    clockText:pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds()),
+    plannedMinutes:tasks.reduce((sum,t)=>sum+t.v,0)
   };
 }
 function drawRecordedSummary(s,now=new Date()){
   const x=recordedSnapshot(s,now);
   el('planned').textContent=elapsedClock(x.completedMs);
-  el('complete').textContent=elapsedClock(x.runningMs);
-  el('pending').textContent=x.completed+' / '+x.tasks;
-  el('remainingLabel').textContent='Sin inicio registrado';
-  el('remaining').textContent=x.unstartedCount+' / '+x.tasks;
+  el('complete').textContent=elapsedClock(x.breakCompletedMs);
+  el('pending').textContent=elapsedClock(x.runningMs);
+  el('remainingLabel').textContent='En curso · descansos';
+  el('remaining').textContent=elapsedClock(x.breakRunningMs);
   el('capacityContext').textContent='Hora local: '+x.clockText+
-    ' · El tiempo se mide desde el registro de inicio hasta que marcas cada tarea como completada.';
+    ' · Tiempo calculado desde las horas de inicio guardadas, incluidas las correcciones manuales, hasta la finalización definitiva.';
   el('realTimeStats').innerHTML=
-    '<span>Intervalos cerrados: '+x.measuredCount+'</span>'+
-    '<span>En curso: '+x.runningCount+'</span>'+
-    '<span>Descansos completados: '+x.pausesDone+'/'+x.pauses+'</span>'+
-    (x.manualCount?'<span>Intervalos completados con ajuste manual: '+x.manualCount+' · '+elapsedClock(x.manualMs)+'</span>':'')+
-    (x.manualRunningCount?'<span>En curso con inicio ajustado: '+x.manualRunningCount+' · '+elapsedClock(x.manualRunningMs)+'</span>':'');
-  el('summary').innerHTML='<span>Reloj: '+x.clockText+'</span>'+
     '<span>Actividades completadas: '+x.completed+'/'+x.tasks+'</span>'+
-    '<span>Tiempo registrado al completar: '+elapsedClock(x.completedMs)+'</span>'+
-    '<span>Tiempo en curso: '+elapsedClock(x.runningMs)+'</span>'+
+    '<span>Descansos completados: '+x.pausesDone+'/'+x.pauses+'</span>'+
+    '<span>Intervalos definitivos de actividades: '+x.measuredCount+'</span>'+
+    '<span>Intervalos definitivos de descansos: '+x.breakMeasuredCount+'</span>'+
+    '<span>Actividades sin inicio: '+x.unstartedCount+'</span>'+
+    '<span>Descansos sin inicio: '+x.breakUnstartedCount+'</span>'+
+    (x.manualCount?'<span>De las actividades, '+x.manualCount+' intervalo(s) con ajuste manual: '+elapsedClock(x.manualMs)+'</span>':'')+
+    (x.breakManualCount?'<span>De los descansos, '+x.breakManualCount+' intervalo(s) con ajuste manual: '+elapsedClock(x.breakManualMs)+'</span>':'');
+  el('summary').innerHTML=
+    '<span>Reloj: '+x.clockText+'</span>'+
+    '<span>Actividades completadas: '+x.completed+'/'+x.tasks+'</span>'+
+    '<span>Tiempo definitivo de actividades: '+elapsedClock(x.completedMs)+'</span>'+
+    '<span>Tiempo definitivo de descansos: '+elapsedClock(x.breakCompletedMs)+'</span>'+
+    '<span>Actividades en curso: '+elapsedClock(x.runningMs)+'</span>'+
+    '<span>Descansos en curso: '+elapsedClock(x.breakRunningMs)+'</span>'+
     '<span>Descansos completados: '+x.pausesDone+'/'+x.pauses+'</span>';
-  el('capacityHelp').textContent='El intervalo medido incluye descansos, interrupciones y tiempo fuera de la aplicación. No equivale necesariamente a trabajo efectivo. Las tareas preexistentes sin hora de creación no reciben un inicio inventado.';
-  el('warning').innerHTML=(x.incompleteEndCount?'<div class="capacity-note">'+x.incompleteEndCount+' actividad(es) completada(s) sin hora de finalización histórica.</div>':'');
+  el('capacityHelp').textContent='Las correcciones manuales sí intervienen en la medición y quedan identificadas. El tiempo de actividades y el de descansos se muestran por separado: sus intervalos pueden solaparse y no equivalen necesariamente a trabajo continuo.';
+  const unknown=x.incompleteEndCount+x.breakIncompleteEndCount;
+  el('warning').innerHTML=unknown?'<div class="capacity-note">'+unknown+
+    ' elemento(s) completado(s) sin hora de finalización registrada. No se les atribuye una hora definitiva inventada.</div>':'';
   return x;
 }
 function breakPlanFor(s,valid=visibleTasks(s)){
