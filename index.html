@@ -1278,6 +1278,16 @@ function refreshRecordedTime(){
   if(typeof document.visibilityState==='string'&&document.visibilityState==='hidden')return;
   const now=new Date();
   drawRecordedSummary(selected,now);
+  // Update the timestamps printed next to each completion checkbox without
+  // rebuilding the task list or clearing inputs that are being edited.
+  el('tasks').querySelectorAll('[data-task-time]').forEach(node=>{
+    node.innerHTML=taskTimesHTML(selected,Number(node.dataset.taskTime),now);
+  });
+  el('tasks').querySelectorAll('[data-break-time]').forEach(node=>{
+    const [kind,index]=node.dataset.breakTime.split(':');
+    const pause=savedBreakRecord(selected,kind,Number(index));
+    if(pause)node.innerHTML=breakTimesHTML(pause,now);
+  });
   el('tasks').querySelectorAll('[data-live-clock]').forEach(node=>{
     node.textContent=activityTrackedSpan(selected,Number(node.dataset.liveClock),now);
   });
