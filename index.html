@@ -254,7 +254,7 @@ function clockInputValue(stamp){
   return pad(d.getHours())+':'+pad(d.getMinutes());
 }
 function revisedStartTimestamp(s,rawValue){
-  if(typeof rawValue!=='string'||!/^\\d{2}:\\d{2}$/.test(rawValue))return null;
+  if(typeof rawValue!=='string'||!/^[0-9]{2}:[0-9]{2}$/.test(rawValue))return null;
   const [hours,minutes]=rawValue.split(':').map(Number);
   if(hours>23||minutes>59||!dateValid(s))return null;
   const value=new Date(Number(s.slice(0,4)),Number(s.slice(5,7))-1,Number(s.slice(8,10)),hours,minutes,0,0);
@@ -411,7 +411,9 @@ function breakPlanFor(s,valid=visibleTasks(s)){
       .map(({entry,breakIndex})=>({
         after:Number(entry.after),minutes:Math.min(960,Math.round(Number(entry.minutes))),
         label:typeof entry.name==='string'&&entry.name.trim()?entry.name.trim():'Descanso',
-        kind:'custom',breakIndex,done:entry.done===true,createdAt:entry.createdAt||null
+        kind:'custom',breakIndex,done:entry.done===true,createdAt:entry.createdAt||null,
+        startedAt:entry.startedAt||null,startSource:entry.startSource||null,
+        finishedAt:entry.finishedAt||null,finishSource:entry.finishSource||null
       }));
   }
   const gaps=valid.length-1;
@@ -420,29 +422,103 @@ function breakPlanFor(s,valid=visibleTasks(s)){
   const per=Math.floor(total/gaps);
   let remainder=total-per*gaps;
   const completed=new Set(Array.isArray(d.autoBreakDone)?d.autoBreakDone:[]);
-  return valid.slice(0,-1).map(({i})=>({
-    after:i,minutes:per+(remainder-->0?1:0),label:'Descanso / comida',
-    kind:'auto',breakIndex:i,done:completed.has(i),createdAt:null
-  })).filter(x=>x.minutes>0);
+  const removed=new Set(Array.isArray(d.autoBreakRemoved)?d.autoBreakRemoved:[]);
+  return valid.slice(0,-1).map(({i})=>{
+    const stored=d.autoBreakTimes?.[String(i)]||{};
+    return {after:i,minutes:per+(remainder-->0?1:0),label:'Descanso / comida',
+      kind:'auto',breakIndex:i,done:completed.has(i),createdAt:null,
+      startedAt:stored.startedAt||null,startSource:stored.startSource||null,
+      finishedAt:stored.finishedAt||null,finishSource:stored.finishSource||null};
+  }).filter(x=>x.minutes>0&&!removed.has(x.breakIndex));
 }
 function totalBreakMinutes(s){return breakPlanFor(s).reduce((sum,x)=>sum+x.minutes,0)}
 function breakProgress(s){
   const pauses=breakPlanFor(s);
   return {completed:pauses.filter(p=>p.done).length,total:pauses.length};
 }
-function setBreakCompleted(kind,index,checked){
-  if(!active(selected)||!Number.isInteger(index))return;
+function breakClockLabel(item){
+  const started=timeStampFull(item.startedAt,item.startSource);
+  const finished=timeStampFull(item.finishedAt,item.finishSource);
+  let elapsed='';
+  if(validCreationStamp(item.startedAt)){
+    const end=validCreationStamp(item.finishedAt)?Date.parse(item.finishedAt):Date.now();
+    const span=end-Date.parse(item.startedAt);
+    if(span>=0)elapsed=' · '+elapsedClock(span)+(validCreationStamp(item.finishedAt)?' transcurridos':' en curso');
+  }
+  return 'Inicio: '+started+' · Finalización: '+finished+elapsed;
+}
+function updateBreakStart(kind,index,rawTime){
+  const pause=breakPlanFor(selected).find(x=>x.kind===kind&&x.breakIndex===index);
+  if(!pause){alert('El descanso ya no está disponible.');render();return}
+  const start=revisedStartTimestamp(selected,rawTime);
+  if(!start){alert('Introduce una hora de inicio válida para el descanso (HH:MM).');render();return}
+  if(Date.parse(start)>Date.now()){
+    alert('No puedes registrar un inicio futuro para un descanso.');render();return;
+  }
+  if(validCreationStamp(pause.finishedAt)&&Date.parse(start)>Date.parse(pause.finishedAt)){
+    alert('El inicio del descanso no puede ser posterior a su finalización.');render();return;
+  }
   const d=get(selected);
-  const available=breakPlanFor(selected).some(p=>p.kind===kind&&p.breakIndex===index);
-  if(!available)return;
   if(kind==='custom'){
     if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
-    d.breakSchedule[index].done=!!checked;
+    d.breakSchedule[index].startedAt=start;
+    d.breakSchedule[index].startSource='manual';
+  }else if(kind==='auto'){
+    if(!d.autoBreakTimes||typeof d.autoBreakTimes!=='object')d.autoBreakTimes={};
+    d.autoBreakTimes[String(index)]={...d.autoBreakTimes[String(index)],startedAt:start,startSource:'manual'};
+  }else return;
+  save();render();
+}
+function removeBreak(kind,index){
+  const d=get(selected);
+  if(!active(selected)||!Number.isInteger(index)||!breakPlanFor(selected).some(p=>p.kind===kind&&p.breakIndex===index))return;
+  if(!confirm('¿Eliminar este descanso solo de la fecha '+selected+'? Esta acción no borra las actividades.'))return;
+  if(kind==='custom'){
+    if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
+    d.breakSchedule.splice(index,1);
+  }else if(kind==='auto'){
+    if(!Array.isArray(d.autoBreakRemoved))d.autoBreakRemoved=[];
+    d.autoBreakRemoved=[...new Set([...d.autoBreakRemoved,index])];
+    if(Array.isArray(d.autoBreakDone))d.autoBreakDone=d.autoBreakDone.filter(i=>i!==index);
+    if(d.autoBreakTimes&&typeof d.autoBreakTimes==='object')delete d.autoBreakTimes[String(index)];
+  }else return;
+  save();render();
+}
+function restoreDeletedAutomaticBreaks(){
+  const d=get(selected);
+  if(!active(selected)||Array.isArray(d.breakSchedule)||!Array.isArray(d.autoBreakRemoved)||!d.autoBreakRemoved.length)return;
+  d.autoBreakRemoved=[];
+  save();render();
+}
+function setBreakCompleted(kind,index,checked){
+  if(!active(selected)||!Number.isInteger(index))return;
+  const d=get(selected),pause=breakPlanFor(selected).find(p=>p.kind===kind&&p.breakIndex===index);
+  if(!pause)return;
+  const now=new Date(),stamp=now.toISOString(),today=selected===iso(now);
+  let record;
+  if(kind==='custom'){
+    if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
+    record=d.breakSchedule[index];
+    record.done=!!checked;
   }else if(kind==='auto'){
     if(Array.isArray(d.breakSchedule))return;
     if(!Array.isArray(d.autoBreakDone))d.autoBreakDone=[];
     d.autoBreakDone=checked?[...new Set([...d.autoBreakDone,index])]:d.autoBreakDone.filter(i=>i!==index);
+    if(!d.autoBreakTimes||typeof d.autoBreakTimes!=='object')d.autoBreakTimes={};
+    record=d.autoBreakTimes[String(index)]??={};
   }else return;
+  if(checked&&today){
+    if(!validCreationStamp(record.startedAt)&&kind==='custom'&&validCreationStamp(record.createdAt)&&
+      iso(new Date(record.createdAt))===selected&&Date.parse(record.createdAt)<=Date.parse(stamp)){
+      record.startedAt=record.createdAt;record.startSource='creation';
+    }
+    if(!validCreationStamp(record.startedAt)||Date.parse(record.startedAt)<=Date.parse(stamp)){
+      record.finishedAt=stamp;record.finishSource='clock';
+    }
+  }else if(!checked){
+    delete record.finishedAt;
+    delete record.finishSource;
+  }
   save();render();
 }
 function addBreak(){
@@ -455,7 +531,12 @@ function addBreak(){
   if(name.length>60){alert('El nombre no puede superar 60 caracteres.');return}
   const d=get(selected);
   if(!Array.isArray(d.breakSchedule))d.breakSchedule=[];
-  d.breakSchedule.push({after,minutes,name,done:false,createdAt:new Date().toISOString()});
+  const createdAt=new Date().toISOString();
+  const startsToday=selected===iso(new Date(createdAt));
+  d.breakSchedule.push({
+    after,minutes,name,done:false,createdAt,
+    ...(startsToday?{startedAt:createdAt,startSource:'creation'}:{})
+  });
   save();render();
   el('breakName').value='Descanso';
   el('breakMinutes').value='15';
@@ -466,6 +547,7 @@ function restoreAutomaticBreaks(){
   if(!Array.isArray(d.breakSchedule))return;
   if(!confirm('¿Volver a la distribución automática? Se quitarán los descansos personalizados de este día.'))return;
   delete d.breakSchedule;
+  d.autoBreakRemoved=[];
   save();render();
 }
 function drawBreakPlanner(s){
