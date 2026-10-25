@@ -239,14 +239,14 @@ function timeStampLabel(value,source){
   if(!validCreationStamp(value))return 'No registrada';
   const d=new Date(value);
   const label=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
-  return label+(source==='creation'?' (creación)':source==='manual'?' (ajuste anterior)':source==='clock'?' (reloj)':'');
+  return label+(source==='creation'?' (creación)':source==='manual'?' (ajuste manual)':source==='clock'?' (reloj)':'');
 }
 function timeStampFull(value,source){
   if(!validCreationStamp(value))return 'No registrada';
   return new Date(value).toLocaleString('es-MX',{
     day:'2-digit',month:'short',year:'numeric',
     hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
-  })+(source==='creation'?' · creación':source==='manual'?' · ajuste manual anterior':source==='clock'?' · reloj del dispositivo':'');
+  })+(source==='creation'?' · creación':source==='manual'?' · ajuste manual':source==='clock'?' · reloj del dispositivo':'');
 }
 function clockInputValue(stamp){
   if(!validCreationStamp(stamp))return '';
@@ -277,6 +277,22 @@ function updateActivityStart(i,timeValue){
   const d=get(selected);
   if(!d.activityTimes||typeof d.activityTimes!=='object')d.activityTimes={};
   d.activityTimes[String(i)]={...entry,startedAt:start,startSource:'manual'};
+  save();render();
+}
+function updateActivityFinish(i,timeValue){
+  if(!active(selected)||!visibleTasks(selected).some(t=>t.i===i))return;
+  const stamp=revisedStartTimestamp(selected,timeValue);
+  if(!stamp){alert('Introduce una hora definitiva válida (HH:MM).');render();return}
+  if(Date.parse(stamp)>Date.now()){
+    alert('No puedes registrar una finalización futura.');render();return;
+  }
+  const d=get(selected),entry={...activityTiming(selected,i)};
+  if(validCreationStamp(entry.startedAt)&&Date.parse(stamp)<Date.parse(entry.startedAt)){
+    alert('La finalización definitiva no puede ser anterior al inicio registrado.');render();return;
+  }
+  if(!d.activityTimes||typeof d.activityTimes!=='object')d.activityTimes={};
+  d.activityTimes[String(i)]={...entry,finishedAt:stamp,finishSource:'manual'};
+  d.done=[...new Set([...(d.done||[]),i])];
   save();render();
 }
 function elapsedClock(ms){
@@ -330,12 +346,12 @@ function activityTrackedSpan(s,i,now=new Date()){
   if(finished&&!closed)return 'Finalización histórica conservada; actividad actualmente pendiente';
   if(finished){
     const prefix=autoClockSource(entry.startSource)&&entry.finishSource==='clock'
-      ?'Tiempo transcurrido entre creación/inicio y finalización'
-      :'Intervalo histórico con ajuste manual';
+      ?'Tiempo definitivo registrado'
+      :'Tiempo definitivo con inicio o fin ajustado manualmente';
     return prefix+': '+elapsedClock(elapsed);
   }
   if(closed)return 'Finalizada sin hora de cierre válida';
-  return (autoClockSource(entry.startSource)?'Tiempo transcurrido desde la creación/inicio':'Intervalo con hora manual')+
+  return (autoClockSource(entry.startSource)?'Tiempo transcurrido desde el inicio registrado':'Tiempo transcurrido desde el inicio ajustado')+
     ': '+elapsedClock(elapsed)+' (en curso)';
 }
 function activityTimePanel(s,i){
@@ -346,7 +362,8 @@ function activityTimePanel(s,i){
   return '<div class="activity-clock"><strong>⏱ Registro de tiempo '+(activeClock?'· en curso':'')+'</strong>'+
     '<small>Inicio: '+esc(started)+'</small>'+
     '<label class="time-adjust">Editar hora de inicio (HH:MM) <input type="time" step="60" data-edit-activity-start="'+i+'" value="'+clockInputValue(record.startedAt)+'" aria-label="Editar hora de inicio de '+esc(NAMES[i])+'"></label>'+
-    '<small>Finalización: '+esc(finished)+'</small>'+
+    '<small>Hora definitiva de finalización: '+esc(finished)+'</small>'+
+    '<label class="time-adjust">Editar finalización (HH:MM) <input type="time" step="60" data-edit-activity-finish="'+i+'" value="'+clockInputValue(record.finishedAt)+'" aria-label="Editar hora de finalización definitiva de '+esc(NAMES[i])+'"></label>'+
     '<span class="clock-elapsed" data-live-clock="'+i+'">'+esc(activityTrackedSpan(s,i))+'</span></div>';
 }
 
@@ -1021,6 +1038,9 @@ el('tasks').querySelectorAll('[data-break-delete]').forEach(button=>button.oncli
 });
 el('tasks').querySelectorAll('[data-edit-activity-start]').forEach(input=>input.onchange=()=>{
   updateActivityStart(Number(input.dataset.editActivityStart),input.value);
+});
+el('tasks').querySelectorAll('[data-edit-activity-finish]').forEach(input=>input.onchange=()=>{
+  updateActivityFinish(Number(input.dataset.editActivityFinish),input.value);
 });
 el('tasks').querySelectorAll('[data-check]').forEach(input=>input.onchange=()=>{
   completeActivity(Number(input.dataset.check),input.checked);
