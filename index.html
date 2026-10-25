@@ -35,6 +35,13 @@
 .activity-clock strong{color:#caf5eb}
 .activity-clock small{font-size:12px;color:#aec5de;overflow-wrap:anywhere}
 .activity-clock .clock-elapsed{color:#b5ffda;font-weight:650;font-variant-numeric:tabular-nums}
+.activity-clock .time-adjust{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:5px;color:#c6dbf0;font-size:12px}
+.activity-clock .time-adjust input,.break-start-edit input{background:#263d58;color:#f5fbff;border:1px solid #6888aa;border-radius:7px;padding:6px 9px}
+.break-start-edit{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#c9dff0;font-size:12px}
+.break-start-edit small{color:#a8c1db}
+.pause .pause-delete{margin-left:auto;padding:6px 9px;background:#4d2b3a;border-color:#8c5067;color:#fff1f4;font-size:12px}
+.pause label{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.break-edit .remove-break{white-space:nowrap}
 @media(max-width:580px){.activity-clock{margin-left:0}}
 .pause small{font-size:11px;color:#ddcaab}
 @media(max-width:580px){.task{grid-template-columns:24px minmax(0,1fr) 84px}.task .time{grid-column:2/-1}.task .name{grid-column:2}.task input[type=number]{grid-column:3}.task .task-actions{grid-column:1/-1}}.pause{margin:8px 0;padding:9px 12px;background:#333343;border-left:3px solid #e0b476;border-radius:6px;font-size:12px}
@@ -241,6 +248,37 @@ function timeStampFull(value,source){
     hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false
   })+(source==='creation'?' · creación':source==='manual'?' · ajuste manual anterior':source==='clock'?' · reloj del dispositivo':'');
 }
+function clockInputValue(stamp){
+  if(!validCreationStamp(stamp))return '';
+  const d=new Date(stamp);
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+function revisedStartTimestamp(s,rawValue){
+  if(typeof rawValue!=='string'||!/^\\d{2}:\\d{2}$/.test(rawValue))return null;
+  const [hours,minutes]=rawValue.split(':').map(Number);
+  if(hours>23||minutes>59||!dateValid(s))return null;
+  const value=new Date(Number(s.slice(0,4)),Number(s.slice(5,7))-1,Number(s.slice(8,10)),hours,minutes,0,0);
+  if(iso(value)!==s||value.getHours()!==hours||value.getMinutes()!==minutes)return null;
+  return value.toISOString();
+}
+function updateActivityStart(i,timeValue){
+  if(!active(selected)||!visibleTasks(selected).some(task=>task.i===i))return;
+  const start=revisedStartTimestamp(selected,timeValue);
+  if(!start){alert('Introduce una hora de inicio válida (HH:MM).');render();return}
+  const entry={...activityTiming(selected,i)};
+  if(Date.parse(start)>Date.now()){
+    alert('No puedes registrar un inicio futuro. Selecciona una hora que ya haya ocurrido.');
+    render();return;
+  }
+  if(validCreationStamp(entry.finishedAt)&&Date.parse(start)>Date.parse(entry.finishedAt)){
+    alert('La hora de inicio no puede ser posterior a la finalización registrada.');
+    render();return;
+  }
+  const d=get(selected);
+  if(!d.activityTimes||typeof d.activityTimes!=='object')d.activityTimes={};
+  d.activityTimes[String(i)]={...entry,startedAt:start,startSource:'manual'};
+  save();render();
+}
 function elapsedClock(ms){
   const seconds=Math.floor(Math.max(0,Number(ms)||0)/1000);
   const hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
@@ -305,8 +343,9 @@ function activityTimePanel(s,i){
   const started=timeStampFull(record.startedAt,record.startSource);
   const finished=timeStampFull(record.finishedAt,record.finishSource);
   const activeClock=validCreationStamp(record.startedAt)&&!validCreationStamp(record.finishedAt)&&!(get(s).done||[]).includes(i);
-  return '<div class="activity-clock"><strong>⏱ Medición automática '+(activeClock?'· en curso':'')+'</strong>'+
+  return '<div class="activity-clock"><strong>⏱ Registro de tiempo '+(activeClock?'· en curso':'')+'</strong>'+
     '<small>Inicio: '+esc(started)+'</small>'+
+    '<label class="time-adjust">Editar hora de inicio (HH:MM) <input type="time" step="60" data-edit-activity-start="'+i+'" value="'+clockInputValue(record.startedAt)+'" aria-label="Editar hora de inicio de '+esc(NAMES[i])+'"></label>'+
     '<small>Finalización: '+esc(finished)+'</small>'+
     '<span class="clock-elapsed" data-live-clock="'+i+'">'+esc(activityTrackedSpan(s,i))+'</span></div>';
 }
@@ -843,6 +882,9 @@ el('tasks').querySelectorAll('[data-move]').forEach(x=>x.onclick=()=>moveActivit
 el('tasks').querySelectorAll('[data-break-complete]').forEach(input=>input.onchange=()=>{
   const parts=input.dataset.breakComplete.split(':');
   setBreakCompleted(parts[0],Number(parts[1]),input.checked);
+});
+el('tasks').querySelectorAll('[data-edit-activity-start]').forEach(input=>input.onchange=()=>{
+  updateActivityStart(Number(input.dataset.editActivityStart),input.value);
 });
 el('tasks').querySelectorAll('[data-check]').forEach(input=>input.onchange=()=>{
   completeActivity(Number(input.dataset.check),input.checked);
