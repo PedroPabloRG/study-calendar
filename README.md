@@ -69,22 +69,25 @@ Después de asignar **Día de proyecto** desde la selección múltiple, abre una
 
 Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
 
-## Resumen de tiempo medido automáticamente
+## Tiempo definitivo a partir de los registros guardados
 
-Se **retiró la barra gráfica «Carga diaria estimada»** y también los deslizadores manuales de inicio y finalización. En su lugar, la sección **«Registro automático de tiempo»** calcula sus indicadores a partir de los registros realmente guardados:
+El panel **«Registro automático de tiempo»** calcula el tiempo transcurrido usando las horas de inicio y finalización **efectivamente guardadas**, tanto si el inicio vino del reloj automático como si se corrigió manualmente. No se usa una barra estimada ni controles deslizantes.
 
 | Indicador | Cómo se calcula |
 | --- | --- |
-| **Tiempo registrado al completar** | Suma de los intervalos con hora de inicio automático y finalización registrada por el reloj, después de marcar la tarea como completada. |
-| **Tiempo en curso** | Tiempo transcurrido desde el inicio automático de las actividades abiertas que aún no están completas. |
-| **Actividades completadas** | Cantidad de casillas marcadas como completadas respecto al total visible de esa fecha. |
-| **Sin inicio registrado** | Actividades anteriores o recurrentes sin una hora inicial válida para esa fecha. |
+| **Tiempo definitivo de actividades** | Suma de los intervalos entre inicio y finalización de las **actividades completadas** que tienen ambas horas válidas; incluye inicios o finales corregidos manualmente. |
+| **Tiempo definitivo de descansos** | Suma equivalente de los **descansos completados**, tanto automáticos como personalizados. |
+| **Actividades en curso** | Tiempo desde el inicio registrado (automático o ajustado) hasta el reloj actual, si no están completadas y no tienen hora de cierre. |
+| **Descansos en curso** | Tiempo equivalente de pausas abiertas con un inicio registrado. |
+| **Sin inicio registrado** | Se indica cuántas actividades y pausas carecen de un comienzo válido. No se les asigna una hora hipotética. |
 
-La interfaz actualiza el tiempo en curso **cada segundo**, sin sobrescribir los formularios que estés editando ni guardar cambios nuevos mientras únicamente corre el reloj. El reporte diario ampliado utiliza los mismos registros.
+La interfaz actualiza los contadores de tiempo abierto **cada segundo**, sin sobrescribir los formularios ni guardar datos mientras solo corre el reloj. El reporte diario ampliado muestra los mismos totales y las horas definitivas por elemento.
 
-**Ejemplo:** una actividad creada hoy a las 14:00 y marcada como completada a las 14:45 tendrá un intervalo registrado de **45 minutos**. Ese tiempo es **tiempo de reloj transcurrido** y puede incluir descanso, interrupciones o inactividad: no es una prueba de 45 minutos de trabajo continuo.
+**Ejemplo:** si corriges la hora inicial de una actividad a las **13:00** y la marcas como completada a las **14:30**, su tiempo definitivo pasa a ser **1 hora y 30 minutos**, aunque inicialmente se hubiera creado a otra hora. Si un descanso empezó a las **13:45** y terminó a las **14:15**, queda registrado aparte como **30 minutos**.
 
-El panel de descansos conserva sus duraciones previstas y sus casillas de completado, sin sumarlas automáticamente a la medición del trabajo realizado. No se usa ya un reparto hipotético de 05:00 a 21:00 para calcular tiempos medidos.
+**Procedencia de los datos:** las horas ajustadas conservan `startSource: "manual"` o `finishSource: "manual"`. Sus intervalos **sí se incluyen** en el total definitivo correspondiente y también se identifican en el desglose manual; **no hay que sumar ambas cifras de nuevo**. Las duraciones previstas siguen siendo informativas y no se usan como tiempo registrado.
+
+Los intervalos de actividades y descansos pueden solaparse y contener inactividad, por lo que **no deben sumarse como si fueran horas de trabajo efectivas sin interrupciones**. Para fechas antiguas sin finalización registrada, el sistema permite establecer una finalización manual verificada por el usuario sin inventar el historial.
 
 ## Registro real de fecha y hora de creación
 
@@ -105,7 +108,7 @@ Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador cap
 2. **Marcar «Completada»:** al marcar la casilla de la actividad, se captura la fecha y hora actual del dispositivo en `finishedAt`. La medición deja de crecer y se muestra el intervalo transcurrido.
 3. **Desmarcarla:** se retira la hora de finalización, pero **se conserva el inicio original**. El contador vuelve a avanzar desde ese instante hasta la próxima finalización.
 4. **Consultar el reporte:** muestra las fechas de creación, inicio y finalización, el intervalo transcurrido y el estado de cada actividad; cuando está abierta, la cuenta del intervalo se actualiza automáticamente.
-5. **Conservar datos antiguos:** las horas ajustadas con los antiguos deslizadores **no se borran**. Aparecen identificadas como ajustes manuales históricos, pero no se mezclan con los totales medidos automáticamente.
+5. **Conservar datos antiguos:** las horas ajustadas con los antiguos deslizadores **no se borran**. Si tienen un inicio y finalización válidos y el elemento está completado, se incluyen en el tiempo definitivo, identificadas como correcciones manuales.
 
 **Fechas y repeticiones:** un inicio automático solo se establece cuando la actividad nueva está programada en **el mismo día real de su creación**. Una actividad recurrente utiliza un registro de ejecución independiente por fecha; no se presume que trabajaste en otra fecha simplemente porque la tarea ya existía. Si una actividad antigua no tiene un inicio verificable, puede guardarse su hora de finalización al marcarla, pero el sistema no inventa una hora de comienzo ni un tiempo transcurrido.
 
@@ -115,8 +118,14 @@ Debajo de cada actividad aparece **«Editar hora de inicio (HH:MM)»**. Usa el s
 
 - Se acepta una hora que **ya haya ocurrido**, no un inicio futuro. Para una fecha pasada puedes corregir la hora dentro de ese día; una fecha futura no admite todavía una hora de ejecución.
 - Si la actividad ya tiene una finalización, el inicio corregido no puede quedar **después** de esa hora. Si hay un error, se avisa y se conserva el valor anterior.
-- Se registra `startSource: "manual"`. El tiempo transcurrido se recalcula, pero los intervalos ajustados manualmente aparecen **separados** de los intervalos medidos sin correcciones, para no confundirlos.
+- Se registra `startSource: "manual"`. El tiempo transcurrido se recalcula y **sí alimenta los totales de tiempo definitivo o en curso**. Un desglose adicional lo identifica como ajustado manualmente, sin duplicarlo.
 - Las actividades antiguas sin inicio pueden recibir una corrección explícita; no se les asigna una hora retrospectiva automáticamente.
+
+### Hora definitiva de finalización de una actividad
+
+Cada actividad incorpora **«Editar finalización (HH:MM)»** junto a su hora de inicio. Al introducir una hora definitiva, la actividad queda marcada como **completada** y se recalcula su tiempo desde el inicio que esté guardado (incluido un ajuste manual). Si la completas **hoy** pulsando su casilla, se guarda la hora real del dispositivo. En una fecha pasada, la casilla modifica el progreso, pero **no inventa una finalización de aquel día**: puedes introducirla explícitamente si la conoces.
+
+La finalización debe estar dentro de la fecha seleccionada, haber ocurrido ya y no ser anterior al inicio. El cambio se guarda en `finishedAt`, con `finishSource: "manual"` o `"clock"`, según proceda. Si desmarcas la actividad, se borra su finalización, pero se conserva su inicio.
 
 Los datos se mantienen en `calendar_days[fecha].activityTimes[ID]`, con `startedAt`, `finishedAt`, `startSource` y `finishSource`, y se exportan tanto en SQLite como en JSON. La hora mostrada depende del reloj y la zona horaria de tu computadora.
 
@@ -131,7 +140,8 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 5. En **«Editar hora de inicio»** de cada descanso puedes corregir su hora (HH:MM), tanto si es **personalizado** como si procede del reparto **automático**. El cambio se guarda por fecha como un ajuste manual, preservando la hora original de creación cuando exista. No se permiten inicios futuros ni posteriores a una finalización registrada.
 6. Pulsa **«Eliminar descanso»** en su lista de edición o **«Eliminar»** junto a la pausa en el horario. La eliminación solicita confirmación y afecta **solo a la fecha seleccionada**, nunca a las actividades. Esto funciona para pausas personalizadas y automáticas.
 7. Los descansos automáticos eliminados dejan de contarse en el día y puedes recuperarlos con **«Restaurar descansos automáticos eliminados»**. Los personalizados se eliminan de su lista y pueden volver a crearse con el formulario.
-8. Al marcar como completado un descanso **hoy**, se guarda su hora real de finalización. Desmarcarlo retira esa finalización, conservando el inicio registrado. Las pausas anteriores sin inicio conocido mantienen el dato sin inventarlo.
+8. Cada descanso tiene ahora un campo **«Hora definitiva de finalización»** (HH:MM). Puedes establecer la hora final manualmente tanto para pausas **automáticas** como **personalizadas**; al guardarla se marca el descanso como completado y se recalcula el intervalo a partir de su inicio guardado, incluyendo ajustes manuales.
+9. Al marcar como completado un descanso **hoy**, se guarda su hora real de finalización. Desmarcarlo retira esa finalización y conserva el inicio. En una fecha pasada, marcar la casilla por sí solo **no inventa una hora histórica**; usa el campo de finalización para registrarla.
 
 ### Compatibilidad y recuperación de los descansos anteriores
 
@@ -141,7 +151,7 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 - **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
 - Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
 - En días **No definido**, **Viaje** o **No disponible** no se programan descansos.
-- Cada fecha guarda sus descansos, marcas de completado y horas de inicio/finalización en `calendar_days` de SQLite y en el respaldo JSON. Los descansos personalizados utilizan `startedAt` y `startSource` (además de `createdAt`); los automáticos guardan sus correcciones en `autoBreakTimes` y los eliminados en `autoBreakRemoved`. Estos datos se mantienen independientes por fecha y no alteran el historial anterior.
+- Cada fecha guarda sus descansos, marcas de completado, `startedAt`, `startSource`, `finishedAt` y `finishSource` en `calendar_days` de SQLite y en el respaldo JSON. Los descansos automáticos guardan sus horas en `autoBreakTimes`; las exclusiones están en `autoBreakRemoved`. Los descansos personalizados mantienen estos campos en `breakSchedule`. Los datos son independientes por fecha y conservan el historial anterior.
 
 ## Persistencia SQLite (local al navegador)
 
