@@ -324,7 +324,11 @@ function completeActivity(i,checked){
         entry.startedAt=creation;entry.startSource='creation';
       }
     }
-    entry.finishedAt=now;entry.finishSource='clock';
+    if(selected===iso(new Date(now))&&(!validCreationStamp(entry.startedAt)||Date.parse(entry.startedAt)<=Date.parse(now))){
+      entry.finishedAt=now;entry.finishSource='clock';
+    }
+    // Marking a previous/future date changes progress, never fabricates today's
+    // clock time as if it were the final time on that other date.
     d.done=[...new Set([...(d.done||[]),i])];
   }else{
     d.done=(d.done||[]).filter(value=>value!==i);
@@ -684,8 +688,9 @@ function drawBreakPlanner(s){
         '<label>Minutos <input type="number" min="5" max="960" step="5" data-break-minutes="'+index+'" value="'+Number(b.minutes)+'"></label>'+
         '<button type="button" class="remove-break" data-remove-break="custom:'+index+'">Eliminar descanso</button>'+
         '<label class="break-start-edit">Editar hora de inicio <input type="time" step="60" data-break-start="custom:'+index+'" value="'+clockInputValue(b.startedAt)+'" aria-label="Editar inicio de '+esc(name)+'"></label>'+
+        '<label class="break-start-edit">Hora definitiva de finalización <input type="time" step="60" data-break-finish="custom:'+index+'" value="'+clockInputValue(b.finishedAt)+'" aria-label="Hora definitiva de '+esc(name)+'"></label>'+
         '<small>'+esc(creationLabel(b.createdAt))+'</small>'+
-        '<small>'+esc(breakClockLabel(b))+'</small>'+
+        '<small data-live-break="custom:'+index+'">'+esc(breakClockLabel(b))+'</small>'+
         (!exists?'<small>La actividad asociada no está programada hoy: esta pausa no cuenta en el horario.</small>':'')+
         '</div>';
     }).join('');
@@ -697,7 +702,8 @@ function drawBreakPlanner(s){
         '<div><strong>Descanso automático</strong><small style="display:block">Después de '+esc(NAMES[p.after])+' · '+fmt(p.minutes)+' previstos</small></div>'+
         '<button type="button" class="remove-break" data-remove-break="'+key+'">Eliminar descanso</button>'+
         '<label class="break-start-edit">Editar hora de inicio <input type="time" step="60" data-break-start="'+key+'" value="'+clockInputValue(p.startedAt)+'" aria-label="Editar inicio del descanso después de '+esc(NAMES[p.after])+'"></label>'+
-        '<small>'+esc(breakClockLabel(p))+'</small>'+
+        '<label class="break-start-edit">Hora definitiva de finalización <input type="time" step="60" data-break-finish="'+key+'" value="'+clockInputValue(p.finishedAt)+'" aria-label="Hora definitiva del descanso después de '+esc(NAMES[p.after])+'"></label>'+
+        '<small data-live-break="'+key+'">'+esc(breakClockLabel(p))+'</small>'+
         '</div>';
     }).join(''):'<p><small>No quedan descansos automáticos programados para esta fecha. Puedes añadir uno personalizado o restaurar los eliminados.</small></p>';
   }
@@ -708,6 +714,10 @@ function drawBreakPlanner(s){
   list.querySelectorAll('[data-break-start]').forEach(input=>input.onchange=()=>{
     const [kind,index]=input.dataset.breakStart.split(':');
     updateBreakStart(kind,Number(index),input.value);
+  });
+  list.querySelectorAll('[data-break-finish]').forEach(input=>input.onchange=()=>{
+    const [kind,index]=input.dataset.breakFinish.split(':');
+    updateBreakFinish(kind,Number(index),input.value);
   });
   list.querySelectorAll('[data-remove-break]').forEach(button=>button.onclick=()=>{
     const [kind,index]=button.dataset.removeBreak.split(':');
@@ -1082,7 +1092,7 @@ valid.forEach(({v,i},index)=>{
     rows+='<div class="pause '+(pause.done?'break-done':'')+'"><label><input type="checkbox" data-break-complete="'+breakKey+'" aria-label="Marcar como completado el descanso '+label+'"'+doneAttribute+'>'+
       '<span>☕ '+label+' · Duración prevista: '+fmt(pause.minutes)+
       '<small style="display:block">'+esc(creationLabel(pause.createdAt))+'</small>'+
-      '<small style="display:block">'+esc(breakClockLabel(pause))+'</small></span></label>'+
+      '<small style="display:block" data-live-break="'+breakKey+'">'+esc(breakClockLabel(pause))+'</small></span></label>'+
       '<button type="button" class="pause-delete" data-break-delete="'+breakKey+'" aria-label="Eliminar '+label+' de esta fecha">Eliminar</button></div>';
   }
 });
