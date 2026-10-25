@@ -89,6 +89,21 @@ La interfaz actualiza los contadores de tiempo abierto **cada segundo**, sin sob
 
 Los intervalos de actividades y descansos pueden solaparse y contener inactividad, por lo que **no deben sumarse como si fueran horas de trabajo efectivas sin interrupciones**. Para fechas antiguas sin finalización registrada, el sistema permite establecer una finalización manual verificada por el usuario sin inventar el historial.
 
+### Horarios visibles junto a las casillas
+
+La columna pequeña **junto a la casilla de cada actividad** muestra ahora directamente las horas guardadas en esa fecha, en lugar de basarse únicamente en la hora de creación del catálogo:
+
+- **Inicio:** hora guardada automáticamente al crear la actividad para ese día, o corregida manualmente.
+- **Fin:** hora real registrada al completar o finalización corregida manualmente.
+- **Tiempo definitivo:** diferencia entre las horas de inicio y fin válidas de la actividad ya completada.
+- **En curso:** transcurso desde la hora inicial hasta el reloj actual si la actividad sigue pendiente.
+
+La misma información aparece **junto a la casilla de cada descanso**, tanto personalizado como automático. Cuando el dato procede de una corrección se indica **«ajuste manual»**; cuando proviene del dispositivo, **«reloj»** o **«creación»**.
+
+En actividades anteriores sin inicio y finalización guardados aparece **«Sin inicio ni finalización registrados»**, y si falta solo una hora se indica **«No registrado»**. No se inventan horarios a partir de la duración prevista ni de una fecha de creación que no corresponda a la ejecución seleccionada.
+
+Estos datos se actualizan visualmente **cada segundo** mientras un intervalo está abierto; el refresco no modifica los registros guardados ni borra los campos de edición. Si corriges una hora, el texto de la casilla se actualiza inmediatamente. El almacenamiento SQLite local y las exportaciones JSON/SQLite conservan los mismos registros originales.
+
 ## Registro real de fecha y hora de creación
 
 Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador captura la fecha y hora **de ese instante** mediante `new Date().toISOString()` y la almacena en los datos del calendario. Para mostrarla se usa la hora local configurada en tu dispositivo (formato de 24 horas). No hay un horario ficticio que empiece a las 05:00 ni se deduce una hora real a partir de la duración.
@@ -96,7 +111,7 @@ Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador cap
 - **Actividad creada:** almacena el campo `createdAt` en el catálogo de actividades. Una actividad recurrente mantiene la **misma fecha y hora de creación originales** cuando aparece en otros días.
 - **Descanso personalizado creado:** almacena `createdAt` dentro del registro de descansos de esa fecha.
 - **Duración prevista:** permanece editable en minutos, pero no se interpreta como una hora real de inicio o de finalización ni como tiempo efectivo trabajado.
-- **Registros anteriores:** las actividades predefinidas, actividades antiguas sin `createdAt` y pausas automáticas aparecen como **«Sin hora de creación registrada»**. No se generan fechas retroactivas inventadas.
+- **Registros anteriores:** las actividades predefinidas, actividades antiguas sin `createdAt` y pausas automáticas conservan sus registros independientes de ejecución. Si una fecha tiene horas de inicio o finalización guardadas, se muestran junto a la casilla aunque falte la hora de creación; si no las tiene, se indica explícitamente. No se generan fechas retroactivas inventadas.
 - **Reporte diario ampliado:** separa registros con marcas de tiempo reales (en orden cronológico de creación) de los registros históricos sin marca de tiempo.
 - **Persistencia:** los campos nuevos se conservan en SQLite local, en su copia JSON y en las exportaciones posteriores. La precisión depende del reloj del dispositivo, por lo que conviene mantenerlo correctamente configurado.
 
