@@ -451,8 +451,10 @@ function breakClockLabel(item){
   return 'Inicio: '+started+' · Finalización: '+finished+elapsed;
 }
 function updateBreakStart(kind,index,rawTime){
-  const pause=breakPlanFor(selected).find(x=>x.kind===kind&&x.breakIndex===index);
-  if(!pause){alert('El descanso ya no está disponible.');render();return}
+  const d=get(selected);
+  const pause=kind==='custom'?d.breakSchedule?.[index]:
+    breakPlanFor(selected).find(x=>x.kind===kind&&x.breakIndex===index);
+  if(!active(selected)||!pause){alert('El descanso ya no está disponible.');render();return}
   const start=revisedStartTimestamp(selected,rawTime);
   if(!start){alert('Introduce una hora de inicio válida para el descanso (HH:MM).');render();return}
   if(Date.parse(start)>Date.now()){
@@ -461,7 +463,6 @@ function updateBreakStart(kind,index,rawTime){
   if(validCreationStamp(pause.finishedAt)&&Date.parse(start)>Date.parse(pause.finishedAt)){
     alert('El inicio del descanso no puede ser posterior a su finalización.');render();return;
   }
-  const d=get(selected);
   if(kind==='custom'){
     if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
     d.breakSchedule[index].startedAt=start;
@@ -474,7 +475,9 @@ function updateBreakStart(kind,index,rawTime){
 }
 function removeBreak(kind,index){
   const d=get(selected);
-  if(!active(selected)||!Number.isInteger(index)||!breakPlanFor(selected).some(p=>p.kind===kind&&p.breakIndex===index))return;
+  if(!active(selected)||!Number.isInteger(index))return;
+  if(kind==='custom'?!Array.isArray(d.breakSchedule)||!d.breakSchedule[index]:
+    !breakPlanFor(selected).some(p=>p.kind===kind&&p.breakIndex===index))return;
   if(!confirm('¿Eliminar este descanso solo de la fecha '+selected+'? Esta acción no borra las actividades.'))return;
   if(kind==='custom'){
     if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
@@ -966,7 +969,7 @@ const desiredScope=isProject
 if(scopeSelect.innerHTML!==desiredScope)scopeSelect.innerHTML=desiredScope;
 drawBreakPlanner(selected);el('resetOrder').disabled=!active(selected);el('addTaskButton').disabled=!active(selected);
 if(!active(selected)){el('tasks').innerHTML='<div class="notice">'+(m==='undefined'?'Día no definido. Utiliza la selección múltiple del calendario para asignarle un estado.':'Día de '+(m==='travel'?'viaje':'descanso o indisponibilidad')+'. Utiliza la selección múltiple del calendario para cambiar su estado.')+'</div>';el('removedTasks').innerHTML='';return}
-let rows='<div class="recorded-note">La medición comienza automáticamente al crear una actividad para hoy y se cierra al marcarla como completada. No necesitas barras ni deslizadores. Los registros antiguos sin inicio conocido permanecen sin una hora inventada.</div>';
+let rows='<div class="recorded-note">La medición comienza automáticamente al crear una actividad para hoy y se cierra al marcarla como completada. Puedes corregir manualmente la hora de inicio desde cada actividad; el cambio queda identificado. Los registros antiguos sin inicio conocido permanecen sin una hora inventada.</div>';
 const valid=visibleTasks(selected),scheduledBreaks=breakPlanFor(selected,valid);
 const breakAnchors=new Map();
 for(const item of scheduledBreaks){
