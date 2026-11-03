@@ -307,6 +307,10 @@ function elapsedClock(ms){
 function activityElapsed(s,i,now=new Date()){
   const entry=activityTiming(s,i),start=entry.startedAt,finish=entry.finishedAt;
   if(!validCreationStamp(start))return null;
+  const isDone=Array.isArray(db.days?.[s]?.done)&&db.days[s].done.includes(i);
+  // A completed task must never resume counting after a reload, even if a
+  // historical completion has no registered final time.
+  if(isDone&&!validCreationStamp(finish))return null;
   const end=validCreationStamp(finish)?Date.parse(finish):now.getTime();
   if(end<Date.parse(start))return null;
   return end-Date.parse(start);
@@ -321,34 +325,39 @@ function completeActivity(i,checked){
   if(checked===alreadyDone)return;
   const entry={...activityTiming(selected,i)};
   if(checked){
-    const now=new Date().toISOString();
+    const now=new Date(),stamp=now.toISOString();
     if(!validCreationStamp(entry.startedAt)){
       const creation=clockStartFromCreation(selected,i);
-      if(creation&&Date.parse(creation)<=Date.parse(now)){
+      if(creation&&Date.parse(creation)<=Date.parse(stamp)){
         entry.startedAt=creation;entry.startSource='creation';
       }
     }
-    if(selected===iso(new Date(now))&&(!validCreationStamp(entry.startedAt)||Date.parse(entry.startedAt)<=Date.parse(now))){
-      entry.finishedAt=now;entry.finishSource='clock';
+    if(selected===iso(now)&&(!validCreationStamp(entry.startedAt)||Date.parse(entry.startedAt)<=Date.parse(stamp))){
+      // Both the checkbox and the final clock time are committed in one
+      // state snapshot so a reload can recover the completed interval.
+      entry.finishedAt=stamp;
+      entry.finishSource='clock';
     }
-    // Marking a previous/future date changes progress, never fabricates today's
-    // clock time as if it were the final time on that other date.
+    // Never apply today's timestamp to the completion of a different day.
+    // Completed without a known end remains stopped and asks for a manual end.
     d.done=[...new Set([...(d.done||[]),i])];
   }else{
     d.done=(d.done||[]).filter(value=>value!==i);
-    // Undo completion without moving the creation/start timestamp.
+    // Explicitly reopening an activity resumes from its original start.
     delete entry.finishedAt;
     delete entry.finishSource;
   }
   if(!d.activityTimes||typeof d.activityTimes!=='object')d.activityTimes={};
   d.activityTimes[String(i)]=entry;
-  save();render();
+  save();
+  render();
 }
 function activityTrackedSpan(s,i,now=new Date()){
   const entry=activityTiming(s,i),started=validCreationStamp(entry.startedAt),
     finished=validCreationStamp(entry.finishedAt),closed=(get(s).done||[]).includes(i);
   if(!started&&finished)return 'Finalización registrada; hora de inicio desconocida';
-  if(!started)return closed?'Completada sin inicio medible':'Sin inicio registrado';
+  if(!started)return closed?'Completada · contador detenido (sin inicio medible)':'Sin inicio registrado';
+  if(closed&&!finished)return 'Completada · contador detenido (sin hora final; puedes editarla)';
   const elapsed=activityElapsed(s,i,now);
   if(elapsed===null)return 'Horas incompatibles; intervalo no calculable';
   if(finished&&!closed)return 'Finalización histórica conservada; actividad actualmente pendiente';
@@ -371,6 +380,10 @@ function compactHoursHTML(start,finish,startSource,finishSource,done,now=new Dat
     '<span>Inicio: <strong>'+esc(hasStart?timeStampLabel(start,startSource):'No registrado')+'</strong></span>',
     '<span>Fin: <strong>'+esc(hasFinish?timeStampLabel(finish,finishSource):'No registrado')+'</strong></span>'
   ];
+  if(done&&!hasFinish){
+    parts.push('<span class="time-total">Completada · contador detenido (sin hora final)</span>');
+    return parts.join('');
+  }
   if(hasStart){
     const end=hasFinish?Date.parse(finish):now.getTime();
     const diff=end-Date.parse(start);
