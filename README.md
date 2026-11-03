@@ -102,7 +102,7 @@ La misma información aparece **junto a la casilla de cada descanso**, tanto per
 
 En actividades anteriores sin inicio y finalización guardados aparece **«Sin inicio ni finalización registrados»**, y si falta solo una hora se indica **«No registrado»**. No se inventan horarios a partir de la duración prevista ni de una fecha de creación que no corresponda a la ejecución seleccionada.
 
-Estos datos se actualizan visualmente **cada segundo** mientras un intervalo está abierto; el refresco no modifica los registros guardados ni borra los campos de edición. Si corriges una hora, el texto de la casilla se actualiza inmediatamente. El almacenamiento SQLite local y las exportaciones JSON/SQLite conservan los mismos registros originales.
+Estos datos se actualizan visualmente **cada segundo** solamente mientras un intervalo está abierto; **los registros completados no reinician su contador al recargar**. El refresco no modifica los datos guardados ni borra los campos de edición. Si corriges una hora, el texto de la casilla se actualiza inmediatamente. El almacenamiento SQLite local y las exportaciones JSON/SQLite conservan los mismos registros originales.
 
 ## Registro real de fecha y hora de creación
 
@@ -120,10 +120,14 @@ Al pulsar **«Agregar actividad»** o **«Agregar descanso»**, el navegador cap
 ## Inicio automático desde la creación y finalización al completar
 
 1. **Crear una actividad para hoy:** al pulsar **«Agregar actividad»** en la fecha actual, el navegador guarda el instante de creación (`createdAt`) y establece automáticamente el inicio de esa actividad (`activityTimes[ID].startedAt`). El reloj empieza a transcurrir sin tocar ningún control de tiempo.
-2. **Marcar «Completada»:** al marcar la casilla de la actividad, se captura la fecha y hora actual del dispositivo en `finishedAt`. La medición deja de crecer y se muestra el intervalo transcurrido.
-3. **Desmarcarla:** se retira la hora de finalización, pero **se conserva el inicio original**. El contador vuelve a avanzar desde ese instante hasta la próxima finalización.
+2. **Marcar «Completada» en el día actual:** en un mismo cambio se registran la casilla marcada en `done` y la hora final `finishedAt` del dispositivo. La medición **se detiene** y se conserva el intervalo definitivo al cerrar y volver a abrir la página.
+3. **Desmarcarla expresamente:** se retira la hora de finalización, pero **se conserva el inicio original**. Esta es la acción que reabre el intervalo para seguir contando; recargar la página no lo reabre.
 4. **Consultar el reporte:** muestra las fechas de creación, inicio y finalización, el intervalo transcurrido y el estado de cada actividad; cuando está abierta, la cuenta del intervalo se actualiza automáticamente.
 5. **Conservar datos antiguos:** las horas ajustadas con los antiguos deslizadores **no se borran**. Si tienen un inicio y finalización válidos y el elemento está completado, se incluyen en el tiempo definitivo, identificadas como correcciones manuales.
+
+**Persistencia y recarga:** tanto el estado `done` como la hora `finishedAt` se guardan en el respaldo JSON del navegador y en SQLite local. Al recargar, los contadores completados utilizan la hora definitiva guardada, nunca el reloj actual. El reloj que avanza cada segundo se aplica solamente a actividades **pendientes que sí tienen una hora de inicio y aún no están finalizadas**.
+
+Si marcas como completada una actividad de una **fecha anterior**, la casilla se guarda y el contador se detiene, pero **no se inventa una hora de cierre histórica**. Se muestra «Completada · contador detenido (sin hora final)» o un mensaje equivalente; puedes introducir la hora definitiva manualmente si la conoces. Si faltan ambas horas, la actividad sigue marcada y detenida.
 
 **Fechas y repeticiones:** un inicio automático solo se establece cuando la actividad nueva está programada en **el mismo día real de su creación**. Una actividad recurrente utiliza un registro de ejecución independiente por fecha; no se presume que trabajaste en otra fecha simplemente porque la tarea ya existía. Si una actividad antigua no tiene un inicio verificable, puede guardarse su hora de finalización al marcarla, pero el sistema no inventa una hora de comienzo ni un tiempo transcurrido.
 
