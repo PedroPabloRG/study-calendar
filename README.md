@@ -180,6 +180,19 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 8. Cada descanso tiene ahora un campo **«Hora definitiva de finalización»** (HH:MM). Puedes establecer la hora final manualmente tanto para pausas **automáticas** como **personalizadas**; al guardarla se marca el descanso como completado y se recalcula el intervalo a partir de su inicio guardado, incluyendo ajustes manuales.
 9. Al marcar como completado un descanso **hoy**, se guarda su hora real de finalización. Desmarcarlo retira esa finalización y conserva el inicio. En una fecha pasada, marcar la casilla por sí solo **no inventa una hora histórica**; usa el campo de finalización para registrarla.
 
+### Mover descansos con ↑ Subir y ↓ Bajar
+
+Los descansos **personalizados y automáticos** ahora tienen flechas **↑** y **↓** tanto en la lista diaria (junto a su casilla de completado) como en el panel **«Descansos y comidas»**.
+
+- Cada pulsación mueve el descanso **una posición dentro de la secuencia visible** de actividades y pausas. Puedes subirlo por encima de otra pausa, desplazarlo a un bloque distinto o situarlo **antes de la primera actividad**.
+- Las flechas se deshabilitan en los extremos de la lista. Las actividades conservan sus controles de movimiento habituales y **no se reordenan automáticamente** al mover un descanso.
+- Los descansos personalizados también permiten elegir **«Antes de la primera actividad»** desde el campo **«Ubicación»**, que sigue ofreciendo todas las actividades visibles como referencias.
+- El orden se guarda **por fecha**, no modifica otros días y se mantiene después de recargar el calendario. **No cambia la duración, las horas reales/manuales de inicio y finalización, la casilla de completado ni el progreso**.
+- Mover descansos no añade tiempos hipotéticos ni reinicia contadores; cambia únicamente su posición en el horario visual.
+- Si se elimina un descanso personalizado, las posiciones de los demás se ajustan para conservar su orden. En descansos automáticos, la opción de restaurar los eliminados continúa disponible.
+
+La ubicación visual se conserva con los campos `breakPositions` (referencia de posición después de una actividad o `null` antes de la primera) y `breakOrder` (orden relativo entre pausas). Ambos se guardan dentro del registro de esa fecha en SQLite local y en los respaldos JSON/SQLite.
+
 ### Compatibilidad y recuperación de los descansos anteriores
 
 - Los días existentes conservan sus **90 minutos de descansos automáticos previstos**, pero esos minutos ya no alimentan la medición de tiempo transcurrido de las actividades. Al eliminar una pausa automática se excluyen sus minutos de ese día sin redistribuirlos entre las restantes; su total previsto puede modificarse desde el campo automático.
@@ -188,7 +201,7 @@ En una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proye
 - **«Usar distribución automática»** permite descartar las pausas personalizadas de ese día y recuperar el reparto automático, previa confirmación.
 - Si quitas temporalmente una actividad, cualquier descanso colocado después de ella se conserva, pero deja de contarse mientras esa actividad no esté programada.
 - En días **No definido**, **Viaje** o **No disponible** no se programan descansos.
-- Cada fecha guarda sus descansos, marcas de completado, `startedAt`, `startSource`, `finishedAt` y `finishSource` en `calendar_days` de SQLite y en el respaldo JSON. Los descansos automáticos guardan sus horas en `autoBreakTimes`; las exclusiones están en `autoBreakRemoved`. Los descansos personalizados mantienen estos campos en `breakSchedule`. Los datos son independientes por fecha y conservan el historial anterior.
+- Cada fecha guarda sus descansos, marcas de completado, `startedAt`, `startSource`, `finishedAt` y `finishSource` en `calendar_days` de SQLite y en el respaldo JSON. Los descansos automáticos guardan sus horas en `autoBreakTimes`; las exclusiones están en `autoBreakRemoved`. Los descansos personalizados mantienen estos campos en `breakSchedule`. Su **orden visual** se guarda aparte en `breakPositions` y `breakOrder`; los datos son independientes por fecha y conservan el historial anterior.
 
 ## Persistencia SQLite (local al navegador)
 
