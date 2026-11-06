@@ -513,19 +513,41 @@ function drawRecordedSummary(s,now=new Date()){
     ' elemento(s) completado(s) sin hora de finalización registrada. No se les atribuye una hora definitiva inventada.</div>':'';
   return x;
 }
+// Per-date visual placement for automatic and custom rests. Placement is
+// independent of completion, durations and saved start/end timestamps.
+function placedAfterForBreak(s,kind,index,fallback,available){
+  const saved=db.days?.[s]?.breakPositions?.[kind+':'+index];
+  if(saved&&typeof saved==='object'&&Object.prototype.hasOwnProperty.call(saved,'after')){
+    if(saved.after===null)return null; // Before the first activity.
+    if(Number.isInteger(saved.after)&&available.has(saved.after))return saved.after;
+  }
+  return fallback;
+}
+function orderBreaksForDay(s,pauses){
+  const order=Array.isArray(db.days?.[s]?.breakOrder)?db.days[s].breakOrder:[];
+  const ranks=new Map(order.map((key,position)=>[key,position]));
+  return pauses.map((pause,position)=>({...pause,_naturalPosition:position})).sort((a,b)=>{
+    const aKey=a.kind+':'+a.breakIndex,bKey=b.kind+':'+b.breakIndex;
+    const aRank=ranks.has(aKey)?ranks.get(aKey):Infinity;
+    const bRank=ranks.has(bKey)?ranks.get(bKey):Infinity;
+    return aRank-bRank||a._naturalPosition-b._naturalPosition;
+  }).map(({_naturalPosition,...pause})=>pause);
+}
 function breakPlanFor(s,valid=visibleTasks(s)){
   if(!active(s)||!valid.length)return [];
   const d=get(s),available=new Set(valid.map(x=>x.i));
   if(Array.isArray(d.breakSchedule)){
-    return d.breakSchedule.map((entry,breakIndex)=>({entry,breakIndex}))
-      .filter(({entry})=>entry&&available.has(Number(entry.after))&&Number.isFinite(Number(entry.minutes))&&Number(entry.minutes)>0)
+    const custom=d.breakSchedule.map((entry,breakIndex)=>({entry,breakIndex}))
+      .filter(({entry})=>entry&&Number.isFinite(Number(entry.minutes))&&Number(entry.minutes)>0)
       .map(({entry,breakIndex})=>({
-        after:Number(entry.after),minutes:Math.min(960,Math.round(Number(entry.minutes))),
+        after:placedAfterForBreak(s,'custom',breakIndex,Number(entry.after),available),
+        minutes:Math.min(960,Math.round(Number(entry.minutes))),
         label:typeof entry.name==='string'&&entry.name.trim()?entry.name.trim():'Descanso',
         kind:'custom',breakIndex,done:entry.done===true,createdAt:entry.createdAt||null,
         startedAt:entry.startedAt||null,startSource:entry.startSource||null,
         finishedAt:entry.finishedAt||null,finishSource:entry.finishSource||null
-      }));
+      })).filter(pause=>pause.after===null||available.has(pause.after));
+    return orderBreaksForDay(s,custom);
   }
   const gaps=valid.length-1;
   if(gaps<=0)return [];
@@ -534,13 +556,85 @@ function breakPlanFor(s,valid=visibleTasks(s)){
   let remainder=total-per*gaps;
   const completed=new Set(Array.isArray(d.autoBreakDone)?d.autoBreakDone:[]);
   const removed=new Set(Array.isArray(d.autoBreakRemoved)?d.autoBreakRemoved:[]);
-  return valid.slice(0,-1).map(({i})=>{
+  const automatic=valid.slice(0,-1).map(({i})=>{
     const stored=d.autoBreakTimes?.[String(i)]||{};
-    return {after:i,minutes:per+(remainder-->0?1:0),label:'Descanso / comida',
+    return {after:placedAfterForBreak(s,'auto',i,i,available),
+      minutes:per+(remainder-->0?1:0),label:'Descanso / comida',
       kind:'auto',breakIndex:i,done:completed.has(i),createdAt:null,
       startedAt:stored.startedAt||null,startSource:stored.startSource||null,
       finishedAt:stored.finishedAt||null,finishSource:stored.finishSource||null};
-  }).filter(x=>x.minutes>0&&!removed.has(x.breakIndex));
+  }).filter(pause=>pause.minutes>0&&!removed.has(pause.breakIndex));
+  return orderBreaksForDay(s,automatic);
+}
+// Interleave tasks and rests in visual order, including rests before the first
+// task. Task ordering remains controlled by its existing ↑/↓ buttons.
+function dailyTimeline(s,valid=visibleTasks(s),pauses=breakPlanFor(s,valid)){
+  const groups=new Map();
+  for(const pause of pauses){
+    if(!groups.has(pause.after))groups.set(pause.after,[]);
+    groups.get(pause.after).push(pause);
+  }
+  const timeline=(groups.get(null)||[]).map(pause=>({
+    type:'break',key:pause.kind+':'+pause.breakIndex,pause
+  }));
+  for(const task of valid){
+    timeline.push({type:'task',i:task.i,task});
+    for(const pause of groups.get(task.i)||[]){
+      timeline.push({type:'break',key:pause.kind+':'+pause.breakIndex,pause});
+    }
+  }
+  return timeline;
+}
+function canMoveBreak(s,kind,index,direction,valid=visibleTasks(s),pauses=breakPlanFor(s,valid)){
+  if(direction!==-1&&direction!==1)return false;
+  const rows=dailyTimeline(s,valid,pauses),key=kind+':'+index;
+  const at=rows.findIndex(item=>item.type==='break'&&item.key===key);
+  return at>=0&&at+direction>=0&&at+direction<rows.length;
+}
+function moveBreak(kind,index,direction){
+  if(!active(selected)||!Number.isInteger(index)||(direction!==-1&&direction!==1))return;
+  const rows=dailyTimeline(selected),key=kind+':'+index;
+  const at=rows.findIndex(item=>item.type==='break'&&item.key===key);
+  const next=at+direction;
+  if(at<0||next<0||next>=rows.length)return;
+  [rows[at],rows[next]]=[rows[next],rows[at]];
+  const d=get(selected);
+  if(!d.breakPositions||typeof d.breakPositions!=='object')d.breakPositions={};
+  const order=[];
+  let anchor=null;
+  for(const item of rows){
+    if(item.type==='task')anchor=item.i;
+    else{
+      d.breakPositions[item.key]={after:anchor};
+      order.push(item.key);
+    }
+  }
+  d.breakOrder=order;
+  save();render();
+  const moved=el('tasks').querySelector('[data-move-break="'+key+'"][data-direction="'+direction+'"]')||
+    el('breakList').querySelector('[data-move-break="'+key+'"][data-direction="'+direction+'"]');
+  if(moved&&typeof moved.focus==='function')moved.focus();
+}
+function clearBreakPlacement(d,key){
+  if(d.breakPositions&&typeof d.breakPositions==='object')delete d.breakPositions[key];
+  if(Array.isArray(d.breakOrder))d.breakOrder=d.breakOrder.filter(item=>item!==key);
+}
+function remapDeletedCustomBreakPositions(d,removedIndex){
+  const renumber=key=>{
+    const match=/^custom:([0-9]+)$/.exec(key);
+    if(!match)return key;
+    const id=Number(match[1]);
+    return id===removedIndex?null:'custom:'+(id>removedIndex?id-1:id);
+  };
+  if(d.breakPositions&&typeof d.breakPositions==='object'){
+    const next={};
+    for(const [key,value] of Object.entries(d.breakPositions)){
+      const changed=renumber(key);
+      if(changed!==null)next[changed]=value;
+    }
+    d.breakPositions=next;
+  }
+  if(Array.isArray(d.breakOrder))d.breakOrder=d.breakOrder.map(renumber).filter(Boolean);
 }
 function totalBreakMinutes(s){return breakPlanFor(s).reduce((sum,x)=>sum+x.minutes,0)}
 function breakProgress(s){
