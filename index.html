@@ -47,6 +47,13 @@
 .break-start-edit{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#c9dff0;font-size:12px}
 .break-start-edit small{color:#a8c1db}
 .pause .pause-delete{margin-left:auto;padding:6px 9px;background:#4d2b3a;border-color:#8c5067;color:#fff1f4;font-size:12px}
+.break-move-actions{display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.break-move-actions button{padding:5px 10px;min-width:35px;background:#294966;border:1px solid #5e87aa;color:#e2f5ff;font-size:16px;font-weight:700}
+.break-move-actions button:disabled{opacity:.35;cursor:not-allowed}
+.break-edit .break-move-actions{align-self:end}
+.pause .break-move-actions{margin-left:auto}
+.pause .pause-delete{margin-left:0}
+@media(max-width:580px){.pause{flex-wrap:wrap}.pause .break-move-actions{margin-left:0}}
 .pause label{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
 .break-edit .remove-break{white-space:nowrap}
 @media(max-width:580px){.activity-clock{margin-left:0}}
@@ -615,6 +622,30 @@ function moveBreak(kind,index,direction){
     el('breakList').querySelector('[data-move-break="'+key+'"][data-direction="'+direction+'"]');
   if(moved&&typeof moved.focus==='function')moved.focus();
 }
+function breakMoveButtons(s,pause,valid=visibleTasks(s),pauses=breakPlanFor(s,valid)){
+  const key=pause.kind+':'+pause.breakIndex;
+  const label=esc(pause.label);
+  return '<div class="break-move-actions" aria-label="Mover '+label+'">'+
+    '<button type="button" data-move-break="'+key+'" data-direction="-1" title="Subir descanso" aria-label="Subir '+label+'" '+
+    (canMoveBreak(s,pause.kind,pause.breakIndex,-1,valid,pauses)?'':'disabled')+'>↑</button>'+
+    '<button type="button" data-move-break="'+key+'" data-direction="1" title="Bajar descanso" aria-label="Bajar '+label+'" '+
+    (canMoveBreak(s,pause.kind,pause.breakIndex,1,valid,pauses)?'':'disabled')+'>↓</button></div>';
+}
+function renderPauseRow(s,pause,valid,pauses){
+  const label=esc(pause.label),doneAttribute=pause.done?' checked':'',key=pause.kind+':'+pause.breakIndex;
+  return '<div class="pause '+(pause.done?'break-done':'')+'"><label>'+
+    '<input type="checkbox" data-break-complete="'+key+'" aria-label="Marcar como completado el descanso '+label+'"'+doneAttribute+'>'+
+    '<span>☕ '+label+' · Duración prevista: '+fmt(pause.minutes)+
+    '<small class="time-record" style="display:flex;margin-top:4px" data-break-time="'+key+'">'+breakTimesHTML(pause)+'</small></span></label>'+
+    breakMoveButtons(s,pause,valid,pauses)+
+    '<button type="button" class="pause-delete" data-break-delete="'+key+'" aria-label="Eliminar '+label+' de esta fecha">Eliminar</button></div>';
+}
+function bindMoveBreakButtons(container){
+  container.querySelectorAll('[data-move-break]').forEach(button=>button.onclick=()=>{
+    const [kind,index]=button.dataset.moveBreak.split(':');
+    moveBreak(kind,Number(index),Number(button.dataset.direction));
+  });
+}
 function clearBreakPlacement(d,key){
   if(d.breakPositions&&typeof d.breakPositions==='object')delete d.breakPositions[key];
   if(Array.isArray(d.breakOrder))d.breakOrder=d.breakOrder.filter(item=>item!==key);
@@ -720,11 +751,13 @@ function removeBreak(kind,index){
   if(kind==='custom'){
     if(!Array.isArray(d.breakSchedule)||!d.breakSchedule[index])return;
     d.breakSchedule.splice(index,1);
+    remapDeletedCustomBreakPositions(d,index);
   }else if(kind==='auto'){
     if(!Array.isArray(d.autoBreakRemoved))d.autoBreakRemoved=[];
     d.autoBreakRemoved=[...new Set([...d.autoBreakRemoved,index])];
     if(Array.isArray(d.autoBreakDone))d.autoBreakDone=d.autoBreakDone.filter(i=>i!==index);
     if(d.autoBreakTimes&&typeof d.autoBreakTimes==='object')delete d.autoBreakTimes[String(index)];
+    clearBreakPlacement(d,'auto:'+index);
   }else return;
   save();render();
 }
@@ -775,7 +808,13 @@ function addBreak(){
   if(!Number.isInteger(minutes)||minutes<5||minutes>960||minutes%5!==0){alert('El descanso debe durar entre 5 y 960 minutos, en múltiplos de 5.');return}
   if(name.length>60){alert('El nombre no puede superar 60 caracteres.');return}
   const d=get(selected);
-  if(!Array.isArray(d.breakSchedule))d.breakSchedule=[];
+  if(!Array.isArray(d.breakSchedule)){
+    // Switching from automatic to custom breaks resets only the old visual
+    // placement rules, not task times or completion.
+    d.breakSchedule=[];
+    delete d.breakPositions;
+    delete d.breakOrder;
+  }
   const createdAt=new Date().toISOString();
   const startsToday=selected===iso(new Date(createdAt));
   d.breakSchedule.push({
@@ -792,6 +831,8 @@ function restoreAutomaticBreaks(){
   if(!Array.isArray(d.breakSchedule))return;
   if(!confirm('¿Volver a la distribución automática? Se quitarán los descansos personalizados de este día.'))return;
   delete d.breakSchedule;
+  delete d.breakPositions;
+  delete d.breakOrder;
   d.autoBreakRemoved=[];
   save();render();
 }
