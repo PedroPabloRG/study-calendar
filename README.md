@@ -69,6 +69,24 @@ Después de asignar **Día de proyecto** desde la selección múltiple, abre una
 
 Al cambiar el tipo de día, las tareas completadas, nombres y orden no se eliminan. Las duraciones editadas para estudio y evaluación se recuerdan por separado para recuperarlas al volver a esos modos. Cambiar a **No definido**, **Viaje** o **No disponible** oculta las actividades sin borrar sus registros.
 
+## Reutilizar actividades desde «Administrar actividades»
+
+En el panel **«Administrar actividades · Reutilizar / Eliminar permanentemente»** aparece un botón **«➕ Reutilizar en este día»** junto a cada actividad existente. Permite volver a añadir una actividad al listado de tareas de **la fecha seleccionada** sin crear otra definición ni cambiar su programación en otras fechas.
+
+1. Selecciona una fecha marcada como **Libre / estudio**, **Evaluación** o **Día de proyecto**.
+2. Abre **Administrar actividades · Reutilizar / Eliminar permanentemente**.
+3. Busca la actividad (original, universitaria, recurrente, de evaluación, de proyecto o previamente creada para otra fecha) y pulsa **«Reutilizar en este día»**.
+4. La actividad aparece entre las **tareas del día**, con su duración prevista editable y sus controles habituales de progreso, hora inicial y hora final. Cuando ya está visible, el botón cambia a **«Ya agregada»** y no permite duplicarla.
+5. Si la actividad había sido quitada de esa fecha, el botón vuelve a mostrarla. El nombre, la duración previamente ajustada y los registros que existan para esa fecha se conservan.
+
+La reutilización **no cambia el alcance original** de la actividad: se habilita únicamente para la fecha elegida mediante el campo `days[fecha].reused`. Es posible, por ejemplo, reutilizar una tarea universitaria en un día de estudio, o un curso en un día de proyecto, sin que aparezca automáticamente en otros días de ese tipo. Si el día está marcado como **No definido**, **Viaje** o **No disponible**, la opción permanece deshabilitada hasta que selecciones un día activo.
+
+**Tiempo automático:** si la reutilizas **hoy** y todavía no existe ninguna hora de inicio o fin guardada para esa actividad en ese día, el reloj comienza al pulsar «Reutilizar», con la hora actual del dispositivo. No se inventan horarios de fechas pasadas o futuras y no se sobrescriben los registros de una sesión anterior. La hora definitiva sigue deteniéndose al marcar «Completada».
+
+**Diferencia importante:** **«Reutilizar»** no equivale a **«Eliminar definitivamente»**. Una actividad eliminada permanentemente ya no está disponible para reutilizar desde el panel; su eliminación continúa borrando sus registros de todas las fechas. Para ocultar una tarea solo de hoy, utiliza **«Quitar»**.
+
+La lista de actividades reutilizadas, así como sus horas y estados, se conserva en la base SQLite local, el respaldo JSON y las siguientes exportaciones.
+
 ## Tiempo definitivo a partir de los registros guardados
 
 El panel **«Registro automático de tiempo»** calcula el tiempo transcurrido usando las horas de inicio y finalización **efectivamente guardadas**, tanto si el inicio vino del reloj automático como si se corrigió manualmente. No se usa una barra estimada ni controles deslizantes.
@@ -208,7 +226,7 @@ Se escriben las tablas de forma transaccional. El archivo SQLite completo se ser
 - Duraciones previstas editables; inicio automático al crear una actividad para hoy, finalización al marcarla como completada y un contador en vivo basado en registros.
 - Añadir tareas para una fecha, días de estudio, días de evaluación o todos los días de proyecto.
 - Subir/bajar y renombrar actividades; se conservan los registros asociados.
-- Quitar y restaurar una tarea de un solo día, o eliminarla de **todas las fechas** después de confirmación.
+- **Reutilizar una actividad existente** desde el panel de administración y agregarla únicamente al día seleccionado, incluso si pertenece a otra clase de día; quitarla o restaurarla sin duplicar el catálogo, o eliminarla de **todas las fechas** después de confirmación.
 - Consultar periodos consecutivos calculados desde las fechas clasificadas, su progreso y el historial de cambios de estado por selección múltiple.
 - Respaldo periódico del calendario completo.
 
