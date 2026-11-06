@@ -862,9 +862,13 @@ function drawBreakPlanner(s){
       list.innerHTML='<p><small>Sin descansos personalizados. Agrega uno arriba o vuelve al reparto automático.</small></p>';
       return;
     }
-    list.innerHTML=d.breakSchedule.map((b,index)=>{
-      const exists=valid.some(x=>x.i===Number(b.after)),anchor=Number(b.after);
-      const selectedOptions=valid.map(({i})=>'<option value="'+i+'" '+(i===anchor?'selected':'')+'>'+esc(NAMES[i])+'</option>').join('');
+    const orderedIndices=pauses.map(p=>p.breakIndex);
+    const customIndices=[...orderedIndices,...d.breakSchedule.map((_,i)=>i).filter(i=>!orderedIndices.includes(i))];
+    list.innerHTML=customIndices.map(index=>{
+      const b=d.breakSchedule[index],visiblePause=pauses.find(p=>p.breakIndex===index),
+        exists=!!visiblePause,anchor=exists?visiblePause.after:Number(b.after);
+      const beforeFirst='<option value="-1" '+(anchor===null?'selected':'')+'>Antes de la primera actividad</option>';
+      const selectedOptions=beforeFirst+valid.map(({i})=>'<option value="'+i+'" '+(i===anchor?'selected':'')+'>'+esc(NAMES[i])+'</option>').join('');
       const missing=exists?'':('<option value="'+anchor+'" selected>'+
         (NAMES[anchor]?esc(NAMES[anchor]):'Actividad eliminada')+' (no programada)</option>');
       const name=typeof b.name==='string'?b.name:'Descanso';
@@ -872,8 +876,9 @@ function drawBreakPlanner(s){
         '<label class="break-check"><input type="checkbox" data-break-list-check="custom:'+index+'" '+(b.done===true?'checked':'')+
           (!exists?' disabled':'')+'> Completado</label>'+
         '<label>Descanso <input type="text" maxlength="60" data-break-name="'+index+'" value="'+esc(name)+'"></label>'+
-        '<label>Después de <select data-break-after="'+index+'">'+missing+selectedOptions+'</select></label>'+
+        '<label>Ubicación <select data-break-after="'+index+'">'+missing+selectedOptions+'</select></label>'+
         '<label>Minutos <input type="number" min="5" max="960" step="5" data-break-minutes="'+index+'" value="'+Number(b.minutes)+'"></label>'+
+        (exists?breakMoveButtons(s,visiblePause,valid,pauses):'')+
         '<button type="button" class="remove-break" data-remove-break="custom:'+index+'">Eliminar descanso</button>'+
         '<label class="break-start-edit">Editar hora de inicio <input type="time" step="60" data-break-start="custom:'+index+'" value="'+clockInputValue(b.startedAt)+'" aria-label="Editar inicio de '+esc(name)+'"></label>'+
         '<label class="break-start-edit">Hora definitiva de finalización <input type="time" step="60" data-break-finish="custom:'+index+'" value="'+clockInputValue(b.finishedAt)+'" aria-label="Hora definitiva de '+esc(name)+'"></label>'+
@@ -887,7 +892,10 @@ function drawBreakPlanner(s){
       const key='auto:'+p.breakIndex;
       return '<div class="break-edit '+(p.done?'completed':'')+'">'+
         '<label class="break-check"><input type="checkbox" data-break-list-check="'+key+'" '+(p.done?'checked':'')+'> Completado</label>'+
-        '<div><strong>Descanso automático</strong><small style="display:block">Después de '+esc(NAMES[p.after])+' · '+fmt(p.minutes)+' previstos</small></div>'+
+        '<div><strong>Descanso automático</strong><small style="display:block">'+
+        (p.after===null?'Antes de la primera actividad':'Después de '+esc(NAMES[p.after]))+
+        ' · '+fmt(p.minutes)+' previstos</small></div>'+
+        breakMoveButtons(s,p,valid,pauses)+
         '<button type="button" class="remove-break" data-remove-break="'+key+'">Eliminar descanso</button>'+
         '<label class="break-start-edit">Editar hora de inicio <input type="time" step="60" data-break-start="'+key+'" value="'+clockInputValue(p.startedAt)+'" aria-label="Editar inicio del descanso después de '+esc(NAMES[p.after])+'"></label>'+
         '<label class="break-start-edit">Hora definitiva de finalización <input type="time" step="60" data-break-finish="'+key+'" value="'+clockInputValue(p.finishedAt)+'" aria-label="Hora definitiva del descanso después de '+esc(NAMES[p.after])+'"></label>'+
@@ -907,6 +915,7 @@ function drawBreakPlanner(s){
     const [kind,index]=input.dataset.breakFinish.split(':');
     updateBreakFinish(kind,Number(index),input.value);
   });
+  bindMoveBreakButtons(list);
   list.querySelectorAll('[data-remove-break]').forEach(button=>button.onclick=()=>{
     const [kind,index]=button.dataset.removeBreak.split(':');
     removeBreak(kind,Number(index));
@@ -920,9 +929,12 @@ function drawBreakPlanner(s){
   });
   list.querySelectorAll('[data-break-after]').forEach(input=>input.onchange=()=>{
     const index=Number(input.dataset.breakAfter),id=Number(input.value);
-    if(!valid.some(task=>task.i===id)){alert('Elige una actividad programada.');render();return}
+    if(id!==-1&&!valid.some(task=>task.i===id)){alert('Elige una actividad programada.');render();return}
     if(!d.breakSchedule[index])return;
-    d.breakSchedule[index].after=id;save();render();
+    if(!d.breakPositions||typeof d.breakPositions!=='object')d.breakPositions={};
+    d.breakPositions['custom:'+index]={after:id===-1?null:id};
+    if(id!==-1)d.breakSchedule[index].after=id;
+    save();render();
   });
   list.querySelectorAll('[data-break-minutes]').forEach(input=>input.onchange=()=>{
     const index=Number(input.dataset.breakMinutes),minutes=Number(input.value);
